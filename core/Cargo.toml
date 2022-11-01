@@ -1,0 +1,20 @@
+[package]
+name = "zeon"
+version = "0.0.1"
+edition = "2021"
+authors = ["stackinspector"]
+license = "MPL-2.0"
+repository = "https://github.com/Berylsoft/Zeon"
+
+[lib]
+name = "zeon"
+path = "lib.rs"
+
+[dependencies]
+sha3 = "0.10"
+num_enum = "0.5"
+macros = { git = "https://github.com/Berylsoft/rust-macros" }
+
+[dev-dependencies]
+hex = "*"
+hex-literal = "*"
