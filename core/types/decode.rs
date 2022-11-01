@@ -145,11 +145,6 @@ impl Type {
                 let t = comptype!();
                 Type::List(Box::new(t))
             },
-            Tag::Set => {
-                let t = comptype!();
-                Type::Set(Box::new(t))
-            },
-
             Tag::Map => {
                 let tk = comptype!();
                 let tv = comptype!();
@@ -231,12 +226,6 @@ impl Value {
                 let t = comptype!();
                 let s = seq!(len);
                 Value::List(t, s)
-            },
-            Tag::Set => {
-                let len = tag_with_szvar!(l4);
-                let t = comptype!();
-                let s = seq!(len);
-                Value::Set(t, s)
             },
             Tag::Map => {
                 let len = tag_with_szvar!(l4);

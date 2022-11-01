@@ -14,7 +14,6 @@ pub enum Tag {
 
     Option,
     List,
-    Set,
     Map,
 
     Alias,
@@ -37,7 +36,6 @@ pub enum Type {
 
     Option(Box<Type>),
     List(Box<Type>),
-    Set(Box<Type>),
     Map(Box<Type>, Box<Type>),
 
     Alias(TypePtr),
@@ -61,19 +59,12 @@ pub enum Value {
     Bytes(Vec<u8>),
 
     Option(Type, Box<Option<Value>>),
-    // with seq length
     List(Type, Vec<Value>),
-    // with seq length
-    Set(Type, Vec<Value>),
-    // with seq length
     Map((Type, Type), Vec<(Value, Value)>),
 
     Alias(TypePtr, Box<Value>),
-    // varient name & type provided by type
     Enum(TypePtr, EnumVarient, Box<Value>),
-    // seq length provided by type
     Tuple(TypePtr, Vec<Value>),
-    // seq length & field name provided by type
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),

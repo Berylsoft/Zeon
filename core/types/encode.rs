@@ -119,8 +119,7 @@ impl Type {
             },
 
             Type::Option(t) |
-            Type::List(t) |
-            Type::Set(t) => {
+            Type::List(t) => {
                 comptype!(t)
             },
 
@@ -189,12 +188,6 @@ impl Value {
 
             },
             Value::List(t, s) => {
-                tag_with_szvar!(s.len());
-                comptype!(t);
-                seq!(s);
-
-            },
-            Value::Set(t, s) => {
                 tag_with_szvar!(s.len());
                 comptype!(t);
                 seq!(s);

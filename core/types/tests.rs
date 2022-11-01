@@ -15,20 +15,20 @@ fn test() {
     }
 
     case!(
-        Value::Map((Type::UInt, Type::Set(Box::new(Type::String))), vec![
-            (Value::UInt(123), Value::Set(Type::String, vec![
+        Value::Map((Type::UInt, Type::List(Box::new(Type::String))), vec![
+            (Value::UInt(123), Value::List(Type::String, vec![
                 Value::String("hello".to_owned()),
                 Value::String("goodbye".to_owned()),
             ])),
-            (Value::UInt(999999), Value::Set(Type::String, vec![
+            (Value::UInt(999999), Value::List(Type::String, vec![
                 Value::String("thanks".to_owned()),
                 Value::String("how are you".to_owned()),
             ])),
         ]),
         hex!("
-        a2 03 0905
-        3c 7b 92 05 55 68656c6c6f 57 676f6f64627965
-        3e 000f423f 92 05 56 7468616e6b73 5b 686f772061726520796f75
+        92 03 0805
+        3c 7b 82 05 55 68656c6c6f 57 676f6f64627965
+        3e 000f423f 82 05 56 7468616e6b73 5b 686f772061726520796f75
         ")
     );
 
@@ -48,7 +48,7 @@ fn test() {
             Value::Enum(0xfedcba9876543210, 163, Box::new(Value::UInt(12))),
         ]),
         hex!("
-        ec 0c 0123456789abcdef
+        dc 0c 0123456789abcdef
         00
         10
         2e 00ed5be1
@@ -58,9 +58,9 @@ fn test() {
         63 280029
         70 05
         71 01 11
-        b0 0123456789abcdef 61 ff
-        c5 fedcba9876543210 2a
-        cc a3 fedcba9876543210 3c 0c
+        a0 0123456789abcdef 61 ff
+        b5 fedcba9876543210 2a
+        bc a3 fedcba9876543210 3c 0c
         ")
     )
 }

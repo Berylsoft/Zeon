@@ -12,7 +12,6 @@ impl Type {
             Type::Bytes     => Tag::Bytes,
             Type::Option(_) => Tag::Option,
             Type::List(_)   => Tag::List,
-            Type::Set(_)    => Tag::Set,
             Type::Map(_, _) => Tag::Map,
             Type::Alias(_)  => Tag::Alias,
             Type::Enum(_)   => Tag::Enum,
@@ -35,7 +34,6 @@ impl Value {
             Value::Bytes(_)      => Tag::Bytes,
             Value::Option(_, _)  => Tag::Option,
             Value::List(_, _)    => Tag::List,
-            Value::Set(_, _)     => Tag::Set,
             Value::Map(_, _)     => Tag::Map,
             Value::Alias(_, _)   => Tag::Alias,
             Value::Enum(_, _, _) => Tag::Enum,
@@ -56,7 +54,6 @@ impl Value {
             Value::Bytes(_) => Type::Bytes,
             Value::Option(t, _) => Type::Option(Box::new(t.clone())),
             Value::List(t, _) => Type::List(Box::new(t.clone())),
-            Value::Set(t, _) => Type::Set(Box::new(t.clone())),
             Value::Map((tk, tv), _) => Type::Map(Box::new(tk.clone()), Box::new(tv.clone())),
             Value::Alias(ptr, _) => Type::Alias(*ptr),
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
@@ -131,13 +128,6 @@ impl Value {
         unreachable!()
     }
 
-    pub fn into_set(self) -> Vec<Value> {
-        if let Value::Set(_t, s) = self {
-            return s;
-        }
-        unreachable!()
-    }
-
     pub fn into_map(self) -> Vec<(Value, Value)> {
         if let Value::Map(_t, s) = self {
             return s;
@@ -191,13 +181,6 @@ impl Type {
 
     pub fn into_list(self) -> Type {
         if let Type::List(v) = self {
-            return *v;
-        }
-        unreachable!()
-    }
-
-    pub fn into_set(self) -> Type {
-        if let Type::Set(v) = self {
             return *v;
         }
         unreachable!()
