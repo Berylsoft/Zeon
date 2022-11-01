@@ -22,6 +22,7 @@ pub enum Tag {
     Struct,
 
     Type,
+    ObjectRef,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -44,6 +45,7 @@ pub enum Type {
     Struct(TypePtr),
 
     Type,
+    ObjectRef,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,6 +70,7 @@ pub enum Value {
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),
+    ObjectRef(u16, u64),
 }
 
 mod casting;

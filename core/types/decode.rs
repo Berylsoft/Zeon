@@ -136,6 +136,7 @@ impl Type {
             Tag::String => Type::String,
             Tag::Bytes => Type::Bytes,
             Tag::Type => Type::Type,
+            Tag::ObjectRef => Type::ObjectRef,
 
             Tag::Option => {
                 let t = comptype!();
@@ -262,6 +263,12 @@ impl Value {
                 tag_with_noop!(l4);
                 let t = comptype!();
                 Value::Type(t)
+            },
+            Tag::ObjectRef => {
+                tag_with_noop!(l4);
+                let ot = fixed_u16!();
+                let oid = fixed_u64!();
+                Value::ObjectRef(ot, oid)
             },
         })
     }

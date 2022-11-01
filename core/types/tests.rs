@@ -46,9 +46,11 @@ fn test() {
             Value::Alias(0x0123456789abcdef, Box::new(Value::Bytes(b"\xFF".to_vec()))),
             Value::Enum(0xfedcba9876543210, 5, Box::new(Value::Int(5))),
             Value::Enum(0xfedcba9876543210, 163, Box::new(Value::UInt(12))),
+            Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(0x0123456789abcdef)))))),
+            Value::ObjectRef(0x0123, 0x0123456789abcdef)
         ]),
         hex!("
-        dc 0c 0123456789abcdef
+        dc 0e 0123456789abcdef
         00
         10
         2e 00ed5be1
@@ -61,6 +63,8 @@ fn test() {
         a0 0123456789abcdef 61 ff
         b5 fedcba9876543210 2a
         bc a3 fedcba9876543210 3c 0c
+        e0 08 08 0d 0123456789abcdef
+        f0 0123 0123456789abcdef
         ")
     )
 }

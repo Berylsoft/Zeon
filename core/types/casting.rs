@@ -18,6 +18,7 @@ impl Type {
             Type::Tuple(_)  => Tag::Tuple,
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
+            Type::ObjectRef => Tag::ObjectRef,
         }
     }
 }
@@ -25,21 +26,22 @@ impl Type {
 impl Value {
     pub fn as_tag(&self) -> Tag {
         match self {
-            Value::Unit          => Tag::Unit,
-            Value::Bool(_)       => Tag::Bool,
-            Value::Int(_)        => Tag::Int,
-            Value::UInt(_)       => Tag::UInt,
-            Value::Float(_)      => Tag::Float,
-            Value::String(_)     => Tag::String,
-            Value::Bytes(_)      => Tag::Bytes,
-            Value::Option(_, _)  => Tag::Option,
-            Value::List(_, _)    => Tag::List,
-            Value::Map(_, _)     => Tag::Map,
-            Value::Alias(_, _)   => Tag::Alias,
-            Value::Enum(_, _, _) => Tag::Enum,
-            Value::Tuple(_, _)   => Tag::Tuple,
-            Value::Struct(_, _)  => Tag::Struct,
-            Value::Type(_)       => Tag::Type,
+            Value::Unit            => Tag::Unit,
+            Value::Bool(_)         => Tag::Bool,
+            Value::Int(_)          => Tag::Int,
+            Value::UInt(_)         => Tag::UInt,
+            Value::Float(_)        => Tag::Float,
+            Value::String(_)       => Tag::String,
+            Value::Bytes(_)        => Tag::Bytes,
+            Value::Option(_, _)    => Tag::Option,
+            Value::List(_, _)      => Tag::List,
+            Value::Map(_, _)       => Tag::Map,
+            Value::Alias(_, _)     => Tag::Alias,
+            Value::Enum(_, _, _)   => Tag::Enum,
+            Value::Tuple(_, _)     => Tag::Tuple,
+            Value::Struct(_, _)    => Tag::Struct,
+            Value::Type(_)         => Tag::Type,
+            Value::ObjectRef(_, _) => Tag::ObjectRef,
         }
     }
 
@@ -60,6 +62,7 @@ impl Value {
             Value::Tuple(ptr, _) => Type::Tuple(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
+            Value::ObjectRef(_, _) => Type::ObjectRef,
         }
     }
 }
@@ -166,6 +169,13 @@ impl Value {
     pub fn into_type(self) -> Type {
         if let Value::Type(v) = self {
             return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_objectref(self) -> (u16, u64) {
+        if let Value::ObjectRef(ot, oid) = self {
+            return (ot, oid);
         }
         unreachable!()
     }

@@ -115,7 +115,8 @@ impl Type {
             Type::Float |
             Type::String |
             Type::Bytes |
-            Type::Type => {
+            Type::Type |
+            Type::ObjectRef => {
             },
 
             Type::Option(t) |
@@ -227,6 +228,12 @@ impl Value {
             Value::Type(t) => {
                 tag_with_noop!();
                 comptype!(t);
+
+            }
+            Value::ObjectRef(ot, oid) => {
+                tag_with_noop!();
+                fixed!(ot);
+                fixed!(oid);
 
             }
         }
