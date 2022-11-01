@@ -2,7 +2,7 @@ pub type TypePtr = u64;
 pub type EnumVarient = u8;
 
 #[repr(u8)]
-#[derive(Clone, Copy, num_enum::TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, num_enum::TryFromPrimitive)]
 pub enum Tag {
     Unit = 0x0,
     Bool,
@@ -25,7 +25,7 @@ pub enum Tag {
     Type,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Unit,
     Bool,
@@ -48,7 +48,7 @@ pub enum Type {
     Type,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Unit,
     Bool(bool),
@@ -116,3 +116,6 @@ pub enum DefType {
     Tuple(Vec<Type>),
     Struct(Vec<(String, Type)>),
 }
+
+#[cfg(test)]
+mod tests;

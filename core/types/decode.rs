@@ -19,7 +19,7 @@ macro_rules! decode_macros {
         }
         macro_rules! bytes {
             ($size:expr) => {{
-                let mut _buf = Vec::with_capacity($size);
+                let mut _buf = vec![0u8; $size];
                 $buf.read_exact(&mut _buf)?;
                 _buf
             }};
