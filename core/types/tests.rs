@@ -38,7 +38,7 @@ fn test() {
             Value::Bool(false),
             Value::Int(-7777777),
             Value::UInt(24393),
-            Value::Float(50.0),
+            Value::Float(50.0_f64.to_bits()),
             Value::String("Berylosft".to_owned()),
             Value::Bytes(b"(\x00)".to_vec()),
             Value::Option(Type::String, Box::new(None)),

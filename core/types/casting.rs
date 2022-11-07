@@ -98,7 +98,7 @@ impl Value {
 
     pub fn into_float(self) -> f64 {
         if let Value::Float(v) = self {
-            return v;
+            return f64::from_bits(v);
         }
         unreachable!()
     }

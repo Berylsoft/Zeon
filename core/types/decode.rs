@@ -46,11 +46,6 @@ macro_rules! decode_macros {
                 u64::from_be_bytes(sized_bytes!(8))
             };
         }
-        macro_rules! fixed_f64 {
-            () => {
-                f64::from_be_bytes(sized_bytes!(8))
-            };
-        }
         macro_rules! tag {
             () => {
                 conv_tag!(u8!())
@@ -216,7 +211,7 @@ impl Value {
             },
             Tag::Float => {
                 tag_with_noop!(l4);
-                let f = fixed_f64!();
+                let f = fixed_u64!();
                 Value::Float(f)
             },
             Tag::String => {

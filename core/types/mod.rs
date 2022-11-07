@@ -93,16 +93,14 @@ pub enum Type {
     ObjectRef,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Unit,
     Bool(bool),
     Int(i64),
     UInt(u64),
-    Float(f64),
-    // with byte length
+    Float(u64),
     String(String),
-    // with byte length
     Bytes(Vec<u8>),
 
     Option(Type, Box<Option<Value>>),
