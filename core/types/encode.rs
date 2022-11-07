@@ -75,6 +75,19 @@ macro_rules! encode_macros {
                 tag_with_uvar!(uvar)
             }};
         }
+        macro_rules! typeptr {
+            ($ptr:expr) => {
+                match $ptr {
+                    TypePtr::Std(StdPtr(stdptr)) => {
+                        fixed!(stdptr);
+                    },
+                    TypePtr::Hash(hash) => {
+                        u8!(0xFF);
+                        bytes!(hash.as_ref())
+                    }
+                }
+            };
+        }
         macro_rules! comptype {
             ($v:expr) => {
                 $v.encode_to($buf)
@@ -133,7 +146,7 @@ impl Type {
             Type::Enum(ptr) |
             Type::Tuple(ptr) |
             Type::Struct(ptr) => {
-                fixed!(ptr);
+                typeptr!(ptr);
             },
         }
     }
@@ -203,25 +216,25 @@ impl Value {
             },
             Value::Alias(ptr, v) => {
                 tag_with_noop!();
-                fixed!(ptr);
+                typeptr!(ptr);
                 value!(v);
 
             },
             Value::Enum(ptr, ev, v) => {
                 tag_with_uvar!(ev as u64);
-                fixed!(ptr);
+                typeptr!(ptr);
                 value!(v);
 
             },
             Value::Tuple(ptr, s) => {
                 tag_with_szvar!(s.len());
-                fixed!(ptr);
+                typeptr!(ptr);
                 seq!(s);
 
             },
             Value::Struct(ptr, s) => {
                 tag_with_szvar!(s.len());
-                fixed!(ptr);
+                typeptr!(ptr);
                 seq!(s);
                 
             },

@@ -1,8 +1,53 @@
-pub type TypePtr = u64;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TypePtr {
+    Std(StdPtr),
+    Hash([u8; 7]),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct StdPtr(u16);
+
+pub fn check_stdptr(n: u16) -> bool {
+    let h8 = n >> 8 as u8;
+    h8 != 0xFF
+}
+
+impl StdPtr {
+    pub fn from_u16(n: u16) -> StdPtr {
+        assert!(check_stdptr(n));
+        StdPtr(n)
+    }
+
+    #[inline]
+    pub fn from_u16_unchecked(n: u16) -> StdPtr {
+        StdPtr(n)
+    }
+
+    #[inline]
+    pub fn as_u16(&self) -> u16 {
+        self.0
+    }
+}
+
+impl TypePtr {
+    pub fn from_u16(n: u16) -> TypePtr {
+        assert!(check_stdptr(n));
+        TypePtr::Std(StdPtr(n))
+    }
+
+    pub fn from_u16_unchecked(n: u16) -> TypePtr {
+        TypePtr::Std(StdPtr(n))
+    }
+
+    pub fn from_path(path: &str) -> TypePtr {
+        TypePtr::Hash(crate::util::shake256(path.as_bytes()))
+    }
+}
+
 pub type EnumVarient = u8;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, num_enum::TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
 pub enum Tag {
     Unit = 0x0,
     Bool,
@@ -25,7 +70,7 @@ pub enum Tag {
     ObjectRef,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
     Unit,
     Bool,
@@ -92,17 +137,6 @@ macros::error_enum! {
 
 mod encode;
 mod decode;
-
-pub trait DefTypeSchema {
-    const PATH: &'static str;
-    fn deftype() -> DefType;
-    fn from_value(v: Value) -> Self;
-    fn to_value(self) -> Value;
-
-    fn ptr() -> TypePtr {
-        crate::util::shake256_u64(Self::PATH.as_bytes())
-    }
-}
 
 pub enum DefType {
     Alias(Type),

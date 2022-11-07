@@ -8,11 +8,6 @@ pub fn shake256<const N: usize>(bytes: &[u8]) -> [u8; N] {
     res
 }
 
-#[inline]
-pub fn shake256_u64(bytes: &[u8]) -> u64 {
-    u64::from_be_bytes(shake256(bytes))
-}
-
 pub fn now_raw() -> std::time::Duration {
     use std::time::{SystemTime, UNIX_EPOCH};
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap()

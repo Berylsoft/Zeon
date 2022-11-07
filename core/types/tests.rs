@@ -33,7 +33,7 @@ fn test() {
     );
 
     case!(
-        Value::Struct(0x0123456789abcdef, vec![
+        Value::Struct(TypePtr::Hash(hex!("0123456789abcd")), vec![
             Value::Unit,
             Value::Bool(false),
             Value::Int(-7777777),
@@ -43,14 +43,14 @@ fn test() {
             Value::Bytes(b"(\x00)".to_vec()),
             Value::Option(Type::String, Box::new(None)),
             Value::Option(Type::Bool, Box::new(Some(Value::Bool(true)))),
-            Value::Alias(0x0123456789abcdef, Box::new(Value::Bytes(b"\xFF".to_vec()))),
-            Value::Enum(0xfedcba9876543210, 5, Box::new(Value::Int(5))),
-            Value::Enum(0xfedcba9876543210, 163, Box::new(Value::UInt(12))),
-            Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(0x0123456789abcdef)))))),
+            Value::Alias(TypePtr::Hash(hex!("fedcba98765432")), Box::new(Value::Bytes(b"\xff".to_vec()))),
+            Value::Enum(TypePtr::from_u16(0x5f49), 5, Box::new(Value::Int(5))),
+            Value::Enum(TypePtr::from_u16(0x00aa), 163, Box::new(Value::UInt(12))),
+            Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(TypePtr::from_u16(0xfe50))))))),
             Value::ObjectRef(0x0123, 0x0123456789abcdef)
         ]),
         hex!("
-        dc 0e 0123456789abcdef
+        dc 0e ff 0123456789abcd
         00
         10
         2e 00ed5be1
@@ -60,10 +60,10 @@ fn test() {
         63 280029
         70 05
         71 01 11
-        a0 0123456789abcdef 61 ff
-        b5 fedcba9876543210 2a
-        bc a3 fedcba9876543210 3c 0c
-        e0 08 08 0d 0123456789abcdef
+        a0 ff fedcba98765432 61 ff
+        b5 5f49 2a
+        bc a3 00aa 3c 0c
+        e0 08 08 0d fe50
         f0 0123 0123456789abcdef
         ")
     )

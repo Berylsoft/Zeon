@@ -13,7 +13,7 @@ macro_rules! decode_macros {
         }
         macro_rules! u8 {
             () => {{
-                let [b] = fixed_inner!(1);
+                let [b] = sized_bytes!(1);
                 b
             }};
         }
@@ -24,7 +24,7 @@ macro_rules! decode_macros {
                 _buf
             }};
         }
-        macro_rules! fixed_inner {
+        macro_rules! sized_bytes {
             ($len:expr) => {{
                 let mut _buf = [0u8; $len];
                 $buf.read_exact(&mut _buf)?;
@@ -33,22 +33,22 @@ macro_rules! decode_macros {
         }
         macro_rules! fixed_u16 {
             () => {
-                u16::from_be_bytes(fixed_inner!(2))
+                u16::from_be_bytes(sized_bytes!(2))
             };
         }
         macro_rules! fixed_u32 {
             () => {
-                u32::from_be_bytes(fixed_inner!(4))
+                u32::from_be_bytes(sized_bytes!(4))
             };
         }
         macro_rules! fixed_u64 {
             () => {
-                u64::from_be_bytes(fixed_inner!(8))
+                u64::from_be_bytes(sized_bytes!(8))
             };
         }
         macro_rules! fixed_f64 {
             () => {
-                f64::from_be_bytes(fixed_inner!(8))
+                f64::from_be_bytes(sized_bytes!(8))
             };
         }
         macro_rules! tag {
@@ -90,6 +90,21 @@ macro_rules! decode_macros {
             ($l4:expr) => {{
                 let size: usize = tag_with_uvar!($l4).try_into()?;
                 size
+            }};
+        }
+        macro_rules! typeptr {
+            () => {{
+                let h8 = u8!();
+                match h8 {
+                    0xFF => {
+                        let hash = sized_bytes!(7);
+                        TypePtr::Hash(hash)
+                    },
+                    h8 => {
+                        let l8 = u8!();
+                        TypePtr::Std(StdPtr(u16::from_be_bytes([h8, l8])))
+                    },
+                }
             }};
         }
         macro_rules! comptype {
@@ -153,19 +168,19 @@ impl Type {
             },
 
             Tag::Alias => {
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 Type::Alias(ptr)
             },
             Tag::Enum => {
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 Type::Enum(ptr)
             },
             Tag::Tuple => {
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 Type::Tuple(ptr)
             },
             Tag::Struct => {
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 Type::Struct(ptr)
             },
         })
@@ -237,25 +252,25 @@ impl Value {
             },
             Tag::Alias => {
                 tag_with_noop!(l4);
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 let v = value!();
                 Value::Alias(ptr, Box::new(v))
             },
             Tag::Enum => {
                 let ev = tag_with_uvar!(l4) as u8;
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 let v = value!();
                 Value::Enum(ptr, ev, Box::new(v))
             },
             Tag::Tuple => {
                 let len = tag_with_szvar!(l4);
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 let s = seq!(len);
                 Value::Tuple(ptr, s)
             },
             Tag::Struct => {
                 let len = tag_with_szvar!(l4);
-                let ptr = fixed_u64!();
+                let ptr = typeptr!();
                 let s = seq!(len);
                 Value::Struct(ptr, s)
             },
