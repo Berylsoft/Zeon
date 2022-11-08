@@ -7,64 +7,6 @@ pub enum TypePtr {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StdPtr(u16);
 
-pub fn check_stdptr(n: u16) -> bool {
-    let h8 = n >> 8 as u8;
-    h8 != 0xFF
-}
-
-impl StdPtr {
-    pub fn from_u16(n: u16) -> StdPtr {
-        assert!(check_stdptr(n));
-        StdPtr(n)
-    }
-
-    #[inline]
-    pub fn from_u16_unchecked(n: u16) -> StdPtr {
-        StdPtr(n)
-    }
-
-    #[inline]
-    pub fn as_u16(&self) -> u16 {
-        self.0
-    }
-}
-
-impl TypePtr {
-    pub fn from_u16(n: u16) -> TypePtr {
-        assert!(check_stdptr(n));
-        TypePtr::Std(StdPtr(n))
-    }
-
-    pub fn from_u16_unchecked(n: u16) -> TypePtr {
-        TypePtr::Std(StdPtr(n))
-    }
-
-    pub fn from_path(path: &str) -> TypePtr {
-        TypePtr::Hash(crate::util::shake256(path.as_bytes()))
-    }
-
-    pub fn as_std(self) -> Option<StdPtr> {
-        match self {
-            Self::Std(stdptr) => Some(stdptr),
-            _ => None,
-        }
-    }
-
-    pub fn as_std_inner(self) -> Option<u16> {
-        match self {
-            Self::Std(StdPtr(n)) => Some(n),
-            _ => None,
-        }
-    }
-
-    pub fn as_hash(self) -> Option<[u8; 7]> {
-        match self {
-            Self::Hash(hash) => Some(hash),
-            _ => None,
-        }
-    }
-}
-
 pub type EnumVarient = u8;
 
 #[repr(u8)]
