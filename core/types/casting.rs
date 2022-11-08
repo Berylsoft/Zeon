@@ -55,7 +55,7 @@ impl TypePtr {
 }
 
 impl Type {
-    pub fn as_tag(&self) -> Tag {
+    pub const fn as_tag(&self) -> Tag {
         match self {
             Type::Unit      => Tag::Unit,
             Type::Bool      => Tag::Bool,
@@ -78,7 +78,7 @@ impl Type {
 }
 
 impl Value {
-    pub fn as_tag(&self) -> Tag {
+    pub const fn as_tag(&self) -> Tag {
         match self {
             Value::Unit            => Tag::Unit,
             Value::Bool(_)         => Tag::Bool,

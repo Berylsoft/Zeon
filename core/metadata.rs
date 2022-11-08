@@ -18,14 +18,14 @@ impl Timestamp {
         }
     }
 
-    pub fn from_unix_ms(ts: i64) -> Timestamp {
+    pub const fn from_unix_ms(ts: i64) -> Timestamp {
         Timestamp {
             secs: ts / 1_000 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
             nanos: ((ts % 1_000) as u32) * 1_000_000,
         }
     }
 
-    pub fn to_unix_ms(&self) -> i64 {
+    pub const fn to_unix_ms(&self) -> i64 {
         (self.secs + Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC) * 1_000 + (self.nanos / 1_000_000) as i64
     }
 }
