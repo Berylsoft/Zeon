@@ -29,3 +29,11 @@ impl Timestamp {
         (self.secs + Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC) * 1_000 + (self.nanos / 1_000_000) as i64
     }
 }
+
+macros::bin_struct! {
+    #[derive(Clone, Copy, Debug)]
+    pub struct ObjectRef {
+        pub ot: u16,
+        pub oid: u64,
+    }
+}

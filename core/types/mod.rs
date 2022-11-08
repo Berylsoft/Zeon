@@ -42,6 +42,27 @@ impl TypePtr {
     pub fn from_path(path: &str) -> TypePtr {
         TypePtr::Hash(crate::util::shake256(path.as_bytes()))
     }
+
+    pub fn as_std(self) -> Option<StdPtr> {
+        match self {
+            Self::Std(stdptr) => Some(stdptr),
+            _ => None,
+        }
+    }
+
+    pub fn as_std_inner(self) -> Option<u16> {
+        match self {
+            Self::Std(StdPtr(n)) => Some(n),
+            _ => None,
+        }
+    }
+
+    pub fn as_hash(self) -> Option<[u8; 7]> {
+        match self {
+            Self::Hash(hash) => Some(hash),
+            _ => None,
+        }
+    }
 }
 
 pub type EnumVarient = u8;
@@ -135,6 +156,14 @@ macros::error_enum! {
 
 mod encode;
 mod decode;
+
+pub trait Schema {
+    const PATH: &'static str;
+    const PTR: TypePtr;
+    fn schema() -> DefType;
+    fn serialize(self) -> Value;
+    fn deserialize(val: Value) -> Self;
+}
 
 pub enum DefType {
     Alias(Type),

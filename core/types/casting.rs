@@ -1,3 +1,4 @@
+use crate::metadata::ObjectRef;
 use super::*;
 
 impl Type {
@@ -64,6 +65,16 @@ impl Value {
             Value::Type(_) => Type::Type,
             Value::ObjectRef(_, _) => Type::ObjectRef,
         }
+    }
+}
+
+impl Value {
+    pub fn serialize_from<T: Schema>(val: T) -> Value {
+        val.serialize()
+    }
+
+    pub fn deserialize_into<T: Schema>(self) -> T {
+        T::deserialize(self)
     }
 }
 
@@ -173,11 +184,17 @@ impl Value {
         unreachable!()
     }
 
-    pub fn into_objectref(self) -> (u16, u64) {
+    pub fn into_objectref(self) -> ObjectRef {
         if let Value::ObjectRef(ot, oid) = self {
-            return (ot, oid);
+            return ObjectRef { ot, oid };
         }
         unreachable!()
+    }
+}
+
+impl Value {
+    pub fn from_float(v: f64) -> Value {
+        Value::Float(v.to_bits())
     }
 }
 
