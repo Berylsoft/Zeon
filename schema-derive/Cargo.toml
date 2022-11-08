@@ -1,0 +1,19 @@
+[package]
+name = "zeon-schema-derive"
+version = "0.0.1"
+edition = "2021"
+authors = ["stackinspector"]
+license = "MPL-2.0"
+repository = "https://github.com/Berylsoft/Zeon"
+
+[lib]
+name = "zeon_schema_derive"
+path = "lib.rs"
+# proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
+hex = "*"
+zeon = { path = "../core" }
