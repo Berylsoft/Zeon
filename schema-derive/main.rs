@@ -6,17 +6,10 @@ fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
 }
 
-fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
+fn ptr2rustpathname(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
     let path = zeon::std::ptr2path(ptr).unwrap();
-    let path = ident(path.to_rustpath());
-    quote!(#path)
-}
-
-fn ptr2rustname(ptr: TypePtr) -> TokenStream {
-    let ptr = ptr.as_std_inner().unwrap();
-    let path = zeon::std::ptr2path(ptr).unwrap();
-    let path = ident(path.to_rustname());
+    let path = ident(path.to_rust_pathname());
     quote!(#path)
 }
 
@@ -110,10 +103,7 @@ fn type2type(ty: Type) -> TokenStream {
         
         Type::Alias(ptr) |
         Type::Enum(ptr) |
-        Type::Struct(ptr) => {
-            let rustpath = ptr2rustpath(ptr);
-            rustpath
-        },
+        Type::Struct(ptr) => ptr2rustpathname(ptr),
     }
 }
 
@@ -150,9 +140,9 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
             })
         }
 
-        Type::Alias(_ptr) |
-        Type::Enum(_ptr) |
-        Type::Struct(_ptr) => quote!(#v.deserialize_into()),
+        Type::Alias(_) |
+        Type::Enum(_) |
+        Type::Struct(_) => quote!(#v.deserialize_into()),
     }
 }
 
@@ -190,34 +180,22 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
             quote!(Value::Tuple(vec![#(#stys,)*]))
         },
 
-        Type::Alias(ptr) => {
-            let ptr = ptr2tokens(ptr);
-            quote!(Value::Alias(#ptr, Box::new(#v.serialize())))
-        },
-        Type::Enum(ptr) => {
-            let ptr = ptr2tokens(ptr);
-            quote!(Value::Enum(#ptr, 0, Box::new(#v.serialize())))
-        },
-        Type::Struct(ptr) => {
-            let ptr = ptr2tokens(ptr);
-            quote!(Value::Struct(#ptr, Box::new(#v.serialize())))
-        },
+        Type::Alias(_) |
+        Type::Enum(_) |
+        Type::Struct(_) => quote!(#v.serialize()),
     }
 }
 
 fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
     match dt {
         DefType::Alias(ty) => {
-            // let path = ptr2rustpath(TypePtr::from_u16_unchecked(ptr));
-            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
             let inner_ty = type2type(ty.clone());
-            let inner_ser = type2ser(ty.clone(), quote!(self.inner));
+            let inner_ser = type2ser(ty.clone(), quote!(self.0));
             let inner_de = type2de(ty.clone(), quote!(val));
             quote!(
                 #[derive(Clone, Debug, PartialEq, Eq)]
-                pub struct #name {
-                    pub inner: #inner_ty,
-                }
+                pub struct #name(pub #inner_ty);
 
                 impl Schema for #name {
                     const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
@@ -227,13 +205,13 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                     }
 
                     fn deserialize(val: Value) -> Self {
-                        Self { inner: #inner_de }
+                        Self(#inner_de)
                     }
                 }
             )
         },
         DefType::Enum(variants) => {
-            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
             let (names, tys): (Vec<String>, Vec<Type>) = variants.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
@@ -277,7 +255,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Struct(fields) => {
-            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
             let len = fields.len();
             let (names, tys): (Vec<String>, Vec<Type>) = fields.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_snake_case(&name)));

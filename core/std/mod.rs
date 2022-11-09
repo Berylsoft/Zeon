@@ -13,34 +13,34 @@ impl Path {
     pub fn to_path(&self) -> String {
         macros::concat_string!(
             "std",
-            self.path,
+            ":", self.path,
             ":", self.name
         )
     }
 
-    // pub fn to_rustpath(&self) -> String {
-    //     macros::concat_string!(
-    //         "zeon::std::codegen",
-    //         crate::util::to_rust_path(self.path).replace(":", "::"),
-    //         "::", crate::util::to_rust_name(self.name)
-    //     )
-    // }
+    pub fn to_rust_name(&self) -> String {
+        crate::util::to_pascal_case(self.name)
+    }
 
-    // pub fn to_rustname(&self) -> String {
-    //     crate::util::to_rust_name(self.name)
-    // }
-
-    pub fn to_rustpath(&self) -> String {
+    pub fn to_rust_path(&self) -> String {
         macros::concat_string!(
-            crate::util::to_snake_case(self.path).replace(":", "_").replacen("_", "", 1),
-            "_", crate::util::to_pascal_case(self.name)
+            crate::util::to_snake_case(self.path).replace(":", "::"),
+            "::", self.to_rust_name()
         )
     }
 
-    pub fn to_rustname(&self) -> String {
+    pub fn to_rust_full_path(&self) -> String {
         macros::concat_string!(
-            crate::util::to_snake_case(self.path).replace(":", "_").replacen("_", "", 1),
-            "_", crate::util::to_pascal_case(self.name)
+            "zeon::std::codegen",
+            "::", crate::util::to_snake_case(self.path).replace(":", "::"),
+            "::", self.to_rust_name()
+        )
+    }
+
+    pub fn to_rust_pathname(&self) -> String {
+        macros::concat_string!(
+            crate::util::to_snake_case(self.path).replace(":", "_"),
+            "_", self.to_rust_name()
         )
     }
 }
@@ -75,7 +75,7 @@ macro_rules! def_struct {
 }
 
 macro_rules! deftypes {
-    ($($stdptr:literal | std $path:literal :$name:literal -> $deftype:expr)*) => {
+    ($($stdptr:literal | std :$path:literal :$name:literal -> $deftype:expr)*) => {
         pub const fn ptr2path(stdptr: u16) -> Option<Path> {
             Some(match stdptr {
                 $($stdptr => Path { path: $path, name: $name },)*
@@ -118,27 +118,27 @@ macro_rules! deftypes {
 
 // If there is a duplicate ptr, the generated `ptr2path` will raise an `unreachable_patterns` warning
 deftypes! {
-    0x0000 | std ":types" :"deftype" -> def_enum! {
+    0x0000 | std :"types" :"deftype" -> def_enum! {
         "alias"  -> Type
         "enum"   -> map!(String, Type)
         "struct" -> map!(String, Type)
     }
-    0x0001 | std ":prim" :"unix-ts" -> def_alias! (UInt)
-    0x0002 | std ":types" :"trait-field" -> def_struct! {
+    0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
+    0x0002 | std :"types" :"trait-field" -> def_struct! {
         "field-type" -> Enum(ptr!(0x0003))
         "name"       -> Alias(ptr!(0x0004))
         "val-type"   -> Type
     }
-    0x0003 | std ":types" :"trait-field-type" -> def_enum! {
+    0x0003 | std :"types" :"trait-field-type" -> def_enum! {
         "const"
         "mut"
         "iter"
     }
-    0x0004 | std ":prim" :"simple-name" -> def_alias! (String)
-    0x0005 | std ":types" :"trait" -> def_struct! {
+    0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
+    0x0005 | std :"types" :"trait" -> def_struct! {
         "fields" -> list!(Enum(ptr!(0x0002)))
     }
-    0x0006 | std ":pattern" :"refset-item" -> def_enum! {
+    0x0006 | std :"pattern" :"refset-item" -> def_enum! {
         "remove" -> ObjectRef
         "add"    -> ObjectRef
     }
@@ -155,11 +155,11 @@ mod test {
     #[test]
     fn test() {
         assert_eq!(ptr2path(0x0001).unwrap().to_path(), "std:prim:unix-ts");
-        // assert_eq!(ptr2path(0x0001).unwrap().to_rustpath(), "zeon::std::codegen::prim::UnixTs");
-        // assert_eq!(ptr2path(0x0001).unwrap().to_rustname(), "UnixTs");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rustpath(), "zeon::std::codegen::prim_UnixTs");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rustname(), "prim_UnixTs");
-        assert_eq!(path2ptr(Path { path: ":prim", name: "unix-ts" }).unwrap(), 0x0001);
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_name(), "UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_path(), "prim::UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_full_path(), "zeon::std::codegen::prim::UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_pathname(), "prim_UnixTs");
+        assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(DEFTYPES.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }
 }
