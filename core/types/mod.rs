@@ -100,13 +100,12 @@ mod encode;
 mod decode;
 
 pub trait Schema {
-    const PATH: &'static str;
     const PTR: TypePtr;
-    fn schema() -> DefType;
     fn serialize(self) -> Value;
     fn deserialize(val: Value) -> Self;
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DefType {
     Alias(Type),
     Enum(Vec<(String, Type)>),

@@ -39,3 +39,13 @@ pub const fn check_stdptr(n: u16) -> bool {
     let h8 = n >> 8 as u8;
     h8 != 0xFF
 }
+
+pub fn to_rust_path(path: &str) -> String {
+    use convert_case::{Case, Casing};
+    path.to_case(Case::Snake)
+}
+
+pub fn to_rust_name(name: &str) -> String {
+    use convert_case::{Case, Casing};
+    name.to_case(Case::Pascal)
+}
