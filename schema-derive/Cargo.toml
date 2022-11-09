@@ -6,10 +6,9 @@ authors = ["stackinspector"]
 license = "MPL-2.0"
 repository = "https://github.com/Berylsoft/Zeon"
 
-[lib]
+[[bin]]
 name = "zeon_schema_derive"
-path = "lib.rs"
-# proc-macro = true
+path = "main.rs"
 
 [dependencies]
 proc-macro2 = "1"
