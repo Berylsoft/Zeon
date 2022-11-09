@@ -158,7 +158,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
 
 fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
     match ty {
-        Type::Unit => quote!(Value::Unit),
+        Type::Unit => quote!({drop(#v); Value::Unit}),
         Type::Bool => quote!(Value::Bool(#v)),
         Type::Int => quote!(Value::Int(#v)),
         Type::UInt => quote!(Value::UInt(#v)),
@@ -238,8 +238,10 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
+            let names4 = names.clone();
             let tyts = tys.clone().into_iter().map(type2type);
             let i = (0..variants.len()).map(syn::Index::from);
+            let i2 = i.clone();
             let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
             let des = tys.into_iter().map(|ty| type2de(ty, quote!(val)));
 
@@ -253,10 +255,15 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                     const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
 
                     fn serialize(self) -> Value {
-                        let val = match self {
-                            #(Self::#names2(val) => #sers,)*
-                        };
-                        Value::Enum(TypePtr::from_u16_unchecked(#ptr), 0, Box::new(val))
+                        Value::Enum(
+                            TypePtr::from_u16_unchecked(#ptr),
+                            match &self {
+                                #(Self::#names4(_) => #i2,)*
+                            },
+                            Box::new(match self {
+                                #(Self::#names2(val) => #sers,)*
+                            }),
+                        )
                     }
 
                     fn deserialize(val: Value) -> Self {
@@ -309,7 +316,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
 
 fn prelude() -> TokenStream {
     quote!(
-        #![allow(non_camel_case_types, unused_variables)]
+        #![allow(non_camel_case_types)]
         use crate::{types::*, metadata::ObjectRef};
     )
 }
