@@ -214,6 +214,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let inner_ser = type2ser(ty.clone(), quote!(self.inner));
             let inner_de = type2de(ty.clone(), quote!(val));
             quote!(
+                #[derive(Clone, Debug, PartialEq, Eq)]
                 pub struct #name {
                     pub inner: #inner_ty,
                 }
@@ -231,17 +232,56 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 }
             )
         },
-        DefType::Enum(tys) => quote!(),
+        DefType::Enum(variants) => {
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let (names, tys): (Vec<String>, Vec<Type>) = variants.clone().into_iter().unzip();
+            let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
+            let names2 = names.clone();
+            let names3 = names.clone();
+            let tyts = tys.clone().into_iter().map(type2type);
+            let i = (0..variants.len()).map(syn::Index::from);
+            let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
+            let des = tys.into_iter().map(|ty| type2de(ty, quote!(val)));
+
+            quote!(
+                #[derive(Clone, Debug, PartialEq, Eq)]
+                pub enum #name {
+                    #(#names(#tyts),)*
+                }
+
+                impl Schema for #name {
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+
+                    fn serialize(self) -> Value {
+                        let val = match self {
+                            #(Self::#names2(val) => #sers,)*
+                        };
+                        Value::Enum(TypePtr::from_u16_unchecked(#ptr), 0, Box::new(val))
+                    }
+
+                    fn deserialize(val: Value) -> Self {
+                        let (variant, val) = val.into_enum();
+                        match variant {
+                            #(#i => Self::#names3(#des),)*
+                            _ => unreachable!(),
+                        }
+                    }
+                }
+            )
+        },
         DefType::Struct(fields) => {
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let len = fields.len();
             let (names, tys): (Vec<String>, Vec<Type>) = fields.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_snake_case(&name)));
             let names2 = names.clone();
+            let names3 = names.clone();
             let tyts = tys.clone().into_iter().map(type2type);
-            let sers = fields.into_iter().map(|(name, ty)| type2ser(ty, ident(macros::concat_string!("self.", to_snake_case(&name)))));
-            let des = tys.into_iter().enumerate().map(|(i, ty)| type2de(ty, quote!(val[#i])));
+            let sers = fields.clone().into_iter().map(|(name, ty)| type2ser(ty, ident(macros::concat_string!("self.", to_snake_case(&name)))));
+            let des = fields.into_iter().map(|(name, ty)| type2de(ty, ident(to_snake_case(&name))));
             
             quote!(
+                #[derive(Clone, Debug, PartialEq, Eq)]
                 pub struct #name {
                     #(pub #names: #tyts,)*
                 }
@@ -256,7 +296,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                     }
 
                     fn deserialize(val: Value) -> Self {
-                        let val = val.into_struct();
+                        let [#(#names3,)*]: [Value; #len] = val.into_struct().try_into().unwrap();
                         Self {
                             #(#names2: #des,)*
                         }
@@ -269,15 +309,12 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
 
 fn prelude() -> TokenStream {
     quote!(
-        #![allow(non_camel_case_types)]
-        use crate::types::*;
+        #![allow(non_camel_case_types, unused_variables)]
+        use crate::{types::*, metadata::ObjectRef};
     )
 }
 
 fn main() {
-    // let ty = Type::List(Box::new(Type::Alias(TypePtr::from_u16(0x0001))));
-    // let ty = Type::Tuple(vec![Type::UInt, Type::Unit]);
-    // println!("{}", type2ser(ty, quote!(v)).to_string());
     println!("{}", prelude());
     for (ptr, dt) in DEFTYPES.iter() {
         println!("{}", derive_def(*ptr, dt.clone()));
