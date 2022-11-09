@@ -1,13 +1,18 @@
-#![allow(dead_code)]
-
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::types::{Type, TypePtr};
+use zeon::{types::{Type, TypePtr, DefType}, std::DEFTYPES};
 
 fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
     let path = zeon::std::ptr2path(ptr).unwrap();
     let path: TokenStream = path.to_rustpath().parse().unwrap();
+    quote!(#path)
+}
+
+fn ptr2rustname(ptr: TypePtr) -> TokenStream {
+    let ptr = ptr.as_std_inner().unwrap();
+    let path = zeon::std::ptr2path(ptr).unwrap();
+    let path: TokenStream = path.to_rustname().parse().unwrap();
     quote!(#path)
 }
 
@@ -196,8 +201,50 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
     }
 }
 
+fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
+    match dt {
+        DefType::Alias(ty) => {
+            // let path = ptr2rustpath(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let inner_ty = type2type(ty.clone());
+            let inner_ser = type2ser(ty.clone(), quote!(self.inner));
+            let inner_de = type2de(ty.clone(), quote!(val));
+            quote!(
+                pub struct #name {
+                    pub inner: #inner_ty,
+                }
+
+                impl Schema for #name {
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+
+                    fn serialize(self) -> Value {
+                        #inner_ser
+                    }
+
+                    fn deserialize(val: Value) -> Self {
+                        Self { inner: #inner_de }
+                    }
+                }
+            )
+        },
+        DefType::Enum(tys) => quote!(),
+        DefType::Struct(tys) => quote!(),
+    }
+}
+
+fn prelude() -> TokenStream {
+    quote!(
+        #![allow(non_camel_case_types)]
+        use crate::types::*;
+    )
+}
+
 fn main() {
     // let ty = Type::List(Box::new(Type::Alias(TypePtr::from_u16(0x0001))));
-    let ty = Type::Tuple(vec![Type::UInt, Type::Unit]);
-    println!("{}", type2ser(ty, quote!(v)).to_string())
+    // let ty = Type::Tuple(vec![Type::UInt, Type::Unit]);
+    // println!("{}", type2ser(ty, quote!(v)).to_string());
+    println!("{}", prelude());
+    for (ptr, dt) in DEFTYPES.iter() {
+        println!("{}", derive_def(*ptr, dt.clone()));
+    }
 }
