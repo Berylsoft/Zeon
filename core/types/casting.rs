@@ -111,7 +111,7 @@ impl Value {
             Value::Option(t, _) => Type::Option(Box::new(t.clone())),
             Value::List(t, _) => Type::List(Box::new(t.clone())),
             Value::Map((tk, tv), _) => Type::Map(Box::new(tk.clone()), Box::new(tv.clone())),
-            Value::Tuple(seq) => Type::Tuple(seq.into_iter().map(|v| v.as_type()).collect()),
+            Value::Tuple(seq) => Type::Tuple(seq.iter().map(|v| v.as_type()).collect()),
             Value::Alias(ptr, _) => Type::Alias(*ptr),
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),

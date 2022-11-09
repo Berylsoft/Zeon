@@ -18,11 +18,30 @@ impl Path {
         )
     }
 
+    // pub fn to_rustpath(&self) -> String {
+    //     macros::concat_string!(
+    //         "zeon::std::codegen",
+    //         crate::util::to_rust_path(self.path).replace(":", "::"),
+    //         "::", crate::util::to_rust_name(self.name)
+    //     )
+    // }
+
+    // pub fn to_rustname(&self) -> String {
+    //     crate::util::to_rust_name(self.name)
+    // }
+
     pub fn to_rustpath(&self) -> String {
         macros::concat_string!(
-            "::zeon_std",
-            crate::util::to_rust_path(self.path).replace(":", "::"),
-            "::", crate::util::to_rust_name(self.name)
+            "zeon::std::codegen",
+            "::", crate::util::to_rust_path(self.path).replace(":", "_").replacen("_", "", 1),
+            "_", crate::util::to_rust_name(self.name)
+        )
+    }
+
+    pub fn to_rustname(&self) -> String {
+        macros::concat_string!(
+            crate::util::to_rust_path(self.path).replace(":", "_").replacen("_", "", 1),
+            "_", crate::util::to_rust_name(self.name)
         )
     }
 }
@@ -137,7 +156,10 @@ mod test {
     #[test]
     fn test() {
         assert_eq!(ptr2path(0x0001).unwrap().to_path(), "std:prim:unix-ts");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rustpath(), "::zeon_std::prim::UnixTs");
+        // assert_eq!(ptr2path(0x0001).unwrap().to_rustpath(), "zeon::std::codegen::prim::UnixTs");
+        // assert_eq!(ptr2path(0x0001).unwrap().to_rustname(), "UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rustpath(), "zeon::std::codegen::prim_UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rustname(), "prim_UnixTs");
         assert_eq!(path2ptr(Path { path: ":prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(DEFTYPES.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }

@@ -36,7 +36,7 @@ pub const fn to_h4l4(n: u8) -> (u8, u8) {
 }
 
 pub const fn check_stdptr(n: u16) -> bool {
-    let h8 = n >> 8 as u8;
+    let h8 = (n >> 8) as u8;
     h8 != 0xFF
 }
 
