@@ -132,6 +132,12 @@ impl Value {
 }
 
 impl Value {
+    pub fn from_float(v: f64) -> Value {
+        Value::Float(v.to_bits())
+    }
+}
+
+impl Value {
     pub fn into_unit(self) {
         if let Value::Unit = self {
             return;
@@ -240,86 +246,6 @@ impl Value {
     pub fn into_objectref(self) -> ObjectRef {
         if let Value::ObjectRef(ot, oid) = self {
             return ObjectRef { ot, oid };
-        }
-        unreachable!()
-    }
-}
-
-impl Value {
-    pub fn from_float(v: f64) -> Value {
-        Value::Float(v.to_bits())
-    }
-}
-
-impl Type {
-    pub fn into_option(self) -> Type {
-        if let Type::Option(v) = self {
-            return *v;
-        }
-        unreachable!()
-    }
-
-    pub fn into_list(self) -> Type {
-        if let Type::List(v) = self {
-            return *v;
-        }
-        unreachable!()
-    }
-
-    pub fn into_map(self) -> (Type, Type) {
-        if let Type::Map(k, v) = self {
-            return (*k, *v);
-        }
-        unreachable!()
-    }
-
-    pub fn into_tuple(self) -> Vec<Type> {
-        if let Type::Tuple(s) = self {
-            return s;
-        }
-        unreachable!()
-    }
-
-    pub fn into_alias(self) -> TypePtr {
-        if let Type::Alias(ptr) = self {
-            return ptr;
-        }
-        unreachable!()
-    }
-
-    pub fn into_enum(self) -> TypePtr {
-        if let Type::Enum(ptr) = self {
-            return ptr;
-        }
-        unreachable!()
-    }
-
-    pub fn into_struct(self) -> TypePtr {
-        if let Type::Struct(ptr) = self {
-            return ptr;
-        }
-        unreachable!()
-    }
-}
-
-impl DefType {
-    pub fn alias_inner(&self) -> Type {
-        if let DefType::Alias(t) = self {
-            return t.clone();
-        }
-        unreachable!()
-    }
-
-    pub fn enum_inner(&self, ev: EnumVarient) -> Type {
-        if let DefType::Enum(s) = self {
-            return s[ev as usize].1.clone();
-        }
-        unreachable!()
-    }
-
-    pub fn struct_inner(&self, pos: usize) -> Type {
-        if let DefType::Struct(s) = self {
-            return s[pos].1.clone();
         }
         unreachable!()
     }
