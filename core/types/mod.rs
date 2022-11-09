@@ -12,25 +12,26 @@ pub type EnumVarient = u8;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
 pub enum Tag {
-    Unit = 0x0,
-    Bool,
-    Int,
-    UInt,
-    Float,
-    String,
-    Bytes,
+    Unit       = 0x0,
+    Bool,      // 0x1
+    Int,       // 0x2
+    UInt,      // 0x3
+    Float,     // 0x4
+    String,    // 0x5
+    Bytes,     // 0x6
 
-    Option,
-    List,
-    Map,
+    Option,    // 0x7
+    List,      // 0x8
+    Map,       // 0x9
 
-    Alias,
-    Enum,
-    Tuple,
-    Struct,
+    Tuple,     // 0xA
 
-    Type,
-    ObjectRef,
+    Alias,     // 0xB
+    Enum,      // 0xC
+    Struct,    // 0xD
+
+    Type,      // 0xE
+    ObjectRef, // 0xF
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -47,9 +48,10 @@ pub enum Type {
     List(Box<Type>),
     Map(Box<Type>, Box<Type>),
 
+    Tuple(Vec<Type>),
+
     Alias(TypePtr),
     Enum(TypePtr),
-    Tuple(TypePtr),
     Struct(TypePtr),
 
     Type,
@@ -70,9 +72,10 @@ pub enum Value {
     List(Type, Vec<Value>),
     Map((Type, Type), Vec<(Value, Value)>),
 
+    Tuple(Vec<Value>),
+
     Alias(TypePtr, Box<Value>),
     Enum(TypePtr, EnumVarient, Box<Value>),
-    Tuple(TypePtr, Vec<Value>),
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),
@@ -109,7 +112,6 @@ pub trait Schema {
 pub enum DefType {
     Alias(Type),
     Enum(Vec<(String, Type)>),
-    Tuple(Vec<Type>),
     Struct(Vec<(String, Type)>),
 }
 

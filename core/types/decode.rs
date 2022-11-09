@@ -116,7 +116,8 @@ macro_rules! decode_macros {
             ($size:expr) => {{
                 let mut s = Vec::with_capacity($size);
                 for _ in 0..$size {
-                    s.push(value!())
+                    let v = value!();
+                    s.push(v)
                 }
                 s
             }};
@@ -125,7 +126,9 @@ macro_rules! decode_macros {
             ($size:expr) => {{
                 let mut s = Vec::with_capacity($size);
                 for _ in 0..$size {
-                    s.push((value!(), value!()))
+                    let k = value!();
+                    let v = value!();
+                    s.push((k, v))
                 }
                 s
             }};
@@ -162,6 +165,16 @@ impl Type {
                 Type::Map(Box::new(tk), Box::new(tv))
             },
 
+            Tag::Tuple => {
+                let len = u8!() as usize;
+                let mut s = Vec::with_capacity(len);
+                for _ in 0..len {
+                    let t = comptype!();
+                    s.push(t)
+                }
+                Type::Tuple(s)
+            },
+
             Tag::Alias => {
                 let ptr = typeptr!();
                 Type::Alias(ptr)
@@ -169,10 +182,6 @@ impl Type {
             Tag::Enum => {
                 let ptr = typeptr!();
                 Type::Enum(ptr)
-            },
-            Tag::Tuple => {
-                let ptr = typeptr!();
-                Type::Tuple(ptr)
             },
             Tag::Struct => {
                 let ptr = typeptr!();
@@ -245,6 +254,11 @@ impl Value {
                 let s = seq_map!(len);
                 Value::Map((tk, tv), s)
             },
+            Tag::Tuple => {
+                let len = tag_with_szvar!(l4);
+                let s = seq!(len);
+                Value::Tuple(s)
+            },
             Tag::Alias => {
                 tag_with_noop!(l4);
                 let ptr = typeptr!();
@@ -256,12 +270,6 @@ impl Value {
                 let ptr = typeptr!();
                 let v = value!();
                 Value::Enum(ptr, ev, Box::new(v))
-            },
-            Tag::Tuple => {
-                let len = tag_with_szvar!(l4);
-                let ptr = typeptr!();
-                let s = seq!(len);
-                Value::Tuple(ptr, s)
             },
             Tag::Struct => {
                 let len = tag_with_szvar!(l4);

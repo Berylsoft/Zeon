@@ -136,15 +136,20 @@ impl Type {
             Type::List(t) => {
                 comptype!(t)
             },
-
             Type::Map(tk, tv) => {
                 comptype!(tk);
                 comptype!(tv);
             },
 
+            Type::Tuple(s) => {
+                fixed!(s.len() as u8);
+                for t in s {
+                    comptype!(t);
+                }
+            }
+
             Type::Alias(ptr) |
             Type::Enum(ptr) |
-            Type::Tuple(ptr) |
             Type::Struct(ptr) => {
                 typeptr!(ptr);
             },
@@ -214,6 +219,11 @@ impl Value {
                 seq_map!(s);
 
             },
+            Value::Tuple(s) => {
+                tag_with_szvar!(s.len());
+                seq!(s);
+
+            },
             Value::Alias(ptr, v) => {
                 tag_with_noop!();
                 typeptr!(ptr);
@@ -224,12 +234,6 @@ impl Value {
                 tag_with_uvar!(ev as u64);
                 typeptr!(ptr);
                 value!(v);
-
-            },
-            Value::Tuple(ptr, s) => {
-                tag_with_szvar!(s.len());
-                typeptr!(ptr);
-                seq!(s);
 
             },
             Value::Struct(ptr, s) => {

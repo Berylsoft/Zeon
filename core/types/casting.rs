@@ -67,9 +67,9 @@ impl Type {
             Type::Option(_) => Tag::Option,
             Type::List(_)   => Tag::List,
             Type::Map(_, _) => Tag::Map,
+            Type::Tuple(_)  => Tag::Tuple,
             Type::Alias(_)  => Tag::Alias,
             Type::Enum(_)   => Tag::Enum,
-            Type::Tuple(_)  => Tag::Tuple,
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
             Type::ObjectRef => Tag::ObjectRef,
@@ -90,9 +90,9 @@ impl Value {
             Value::Option(_, _)    => Tag::Option,
             Value::List(_, _)      => Tag::List,
             Value::Map(_, _)       => Tag::Map,
+            Value::Tuple(_)        => Tag::Tuple,
             Value::Alias(_, _)     => Tag::Alias,
             Value::Enum(_, _, _)   => Tag::Enum,
-            Value::Tuple(_, _)     => Tag::Tuple,
             Value::Struct(_, _)    => Tag::Struct,
             Value::Type(_)         => Tag::Type,
             Value::ObjectRef(_, _) => Tag::ObjectRef,
@@ -111,9 +111,9 @@ impl Value {
             Value::Option(t, _) => Type::Option(Box::new(t.clone())),
             Value::List(t, _) => Type::List(Box::new(t.clone())),
             Value::Map((tk, tv), _) => Type::Map(Box::new(tk.clone()), Box::new(tv.clone())),
+            Value::Tuple(seq) => Type::Tuple(seq.into_iter().map(|v| v.as_type()).collect()),
             Value::Alias(ptr, _) => Type::Alias(*ptr),
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
-            Value::Tuple(ptr, _) => Type::Tuple(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
             Value::ObjectRef(_, _) => Type::ObjectRef,
@@ -202,6 +202,13 @@ impl Value {
         unreachable!()
     }
 
+    pub fn into_tuple(self) -> Vec<Value> {
+        if let Value::Tuple(s) = self {
+            return s;
+        }
+        unreachable!()
+    }
+
     pub fn into_alias(self) -> Value {
         if let Value::Alias(_ptr, v) = self {
             return *v;
@@ -212,13 +219,6 @@ impl Value {
     pub fn into_enum(self) -> (EnumVarient, Value) {
         if let Value::Enum(_ptr, ev, v) = self {
             return (ev, *v);
-        }
-        unreachable!()
-    }
-
-    pub fn into_tuple(self) -> Vec<Value> {
-        if let Value::Tuple(_ptr, s) = self {
-            return s;
         }
         unreachable!()
     }
@@ -273,6 +273,13 @@ impl Type {
         unreachable!()
     }
 
+    pub fn into_tuple(self) -> Vec<Type> {
+        if let Type::Tuple(s) = self {
+            return s;
+        }
+        unreachable!()
+    }
+
     pub fn into_alias(self) -> TypePtr {
         if let Type::Alias(ptr) = self {
             return ptr;
@@ -282,13 +289,6 @@ impl Type {
 
     pub fn into_enum(self) -> TypePtr {
         if let Type::Enum(ptr) = self {
-            return ptr;
-        }
-        unreachable!()
-    }
-
-    pub fn into_tuple(self) -> TypePtr {
-        if let Type::Tuple(ptr) = self {
             return ptr;
         }
         unreachable!()
@@ -313,13 +313,6 @@ impl DefType {
     pub fn enum_inner(&self, ev: EnumVarient) -> Type {
         if let DefType::Enum(s) = self {
             return s[ev as usize].1.clone();
-        }
-        unreachable!()
-    }
-
-    pub fn tuple_inner(&self, pos: usize) -> Type {
-        if let DefType::Tuple(s) = self {
-            return s[pos].clone();
         }
         unreachable!()
     }

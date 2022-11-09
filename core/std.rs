@@ -43,14 +43,6 @@ macro_rules! def_enum {
     };
 }
 
-// macro_rules! def_tuple {
-//     ($($ty:expr)*) => {
-//         DefType::Tuple(vec![
-//             $($ty,)*
-//         ])
-//     };
-// }
-
 macro_rules! def_struct {
     ($($field:literal -> $ty:expr)*) => {
         DefType::Struct(vec![
@@ -106,7 +98,6 @@ deftypes! {
     0x0000 | std ":types" :"deftype" -> def_enum! {
         "alias"  -> Type
         "enum"   -> map!(String, Type)
-        "tuple"  -> list!(Type)
         "struct" -> map!(String, Type)
     }
     0x0001 | std ":prim" :"unix-ts" -> def_alias! (UInt)
