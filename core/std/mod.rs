@@ -32,8 +32,7 @@ impl Path {
 
     pub fn to_rustpath(&self) -> String {
         macros::concat_string!(
-            "zeon::std::codegen",
-            "::", crate::util::to_snake_case(self.path).replace(":", "_").replacen("_", "", 1),
+            crate::util::to_snake_case(self.path).replace(":", "_").replacen("_", "", 1),
             "_", crate::util::to_pascal_case(self.name)
         )
     }

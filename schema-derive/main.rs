@@ -1,18 +1,22 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::{types::{Type, TypePtr, DefType}, std::DEFTYPES};
+use zeon::{types::{Type, TypePtr, DefType}, std::DEFTYPES, util::{to_pascal_case, to_snake_case}};
+
+fn ident<S: AsRef<str>>(s: S) -> TokenStream {
+    s.as_ref().parse().unwrap()
+}
 
 fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
     let path = zeon::std::ptr2path(ptr).unwrap();
-    let path: TokenStream = path.to_rustpath().parse().unwrap();
+    let path = ident(path.to_rustpath());
     quote!(#path)
 }
 
 fn ptr2rustname(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
     let path = zeon::std::ptr2path(ptr).unwrap();
-    let path: TokenStream = path.to_rustname().parse().unwrap();
+    let path = ident(path.to_rustname());
     quote!(#path)
 }
 
@@ -20,7 +24,7 @@ fn ptr2tokens(ptr: TypePtr) -> TokenStream {
     match ptr {
         TypePtr::Std(ptr) => {
             let n = ptr.as_u16();
-            quote!(TypePtr::Std(StdPtr(#n)))
+            quote!(TypePtr::from_u16_unchecked(#n))
         },
         TypePtr::Hash(hash) => {
             let hex = hex::encode(hash);
@@ -188,15 +192,15 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
 
         Type::Alias(ptr) => {
             let ptr = ptr2tokens(ptr);
-            quote!(Value::Alias(#ptr, #v.serialize()))
+            quote!(Value::Alias(#ptr, Box::new(#v.serialize())))
         },
         Type::Enum(ptr) => {
             let ptr = ptr2tokens(ptr);
-            quote!(Value::Enum(#ptr, #v.serialize()))
+            quote!(Value::Enum(#ptr, 0, Box::new(#v.serialize())))
         },
         Type::Struct(ptr) => {
             let ptr = ptr2tokens(ptr);
-            quote!(Value::Struct(#ptr, #v.serialize()))
+            quote!(Value::Struct(#ptr, Box::new(#v.serialize())))
         },
     }
 }
@@ -228,7 +232,38 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Enum(tys) => quote!(),
-        DefType::Struct(tys) => quote!(),
+        DefType::Struct(fields) => {
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let (names, tys): (Vec<String>, Vec<Type>) = fields.clone().into_iter().unzip();
+            let names = names.into_iter().map(|name| ident(to_snake_case(&name)));
+            let names2 = names.clone();
+            let tyts = tys.clone().into_iter().map(type2type);
+            let sers = fields.into_iter().map(|(name, ty)| type2ser(ty, ident(macros::concat_string!("self.", to_snake_case(&name)))));
+            let des = tys.into_iter().enumerate().map(|(i, ty)| type2de(ty, quote!(val[#i])));
+            
+            quote!(
+                pub struct #name {
+                    #(pub #names: #tyts,)*
+                }
+
+                impl Schema for #name {
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+
+                    fn serialize(self) -> Value {
+                        Value::Struct(TypePtr::from_u16_unchecked(#ptr), vec![
+                            #(#sers,)*
+                        ])
+                    }
+
+                    fn deserialize(val: Value) -> Self {
+                        let val = val.into_struct();
+                        Self {
+                            #(#names2: #des,)*
+                        }
+                    }
+                }
+            )
+        },
     }
 }
 
