@@ -36,6 +36,11 @@ macro_rules! def_alias {
 }
 
 macro_rules! def_enum {
+    ($($variant:literal)*) => {
+        DefType::Enum(vec![
+            $(($variant.to_owned(), Unit),)*
+        ])
+    };
     ($($variant:literal -> $ty:expr)*) => {
         DefType::Enum(vec![
             $(($variant.to_owned(), $ty),)*
@@ -107,9 +112,9 @@ deftypes! {
         "val-type"   -> Type
     }
     0x0003 | std ":types" :"trait-field-type" -> def_enum! {
-        "const" -> Unit
-        "mut"   -> Unit
-        "iter"  -> Unit
+        "const"
+        "mut"
+        "iter"
     }
     0x0004 | std ":prim" :"simple-name" -> def_alias! (String)
     0x0005 | std ":types" :"trait" -> def_struct! {
