@@ -247,7 +247,7 @@ impl Value {
                 comptype!(t);
 
             }
-            Value::ObjectRef(ot, oid) => {
+            Value::ObjectRef(ObjectRef { ot, oid }) => {
                 tag_with_noop!();
                 fixed!(ot);
                 fixed!(oid);

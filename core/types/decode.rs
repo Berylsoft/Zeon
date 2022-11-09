@@ -286,7 +286,7 @@ impl Value {
                 tag_with_noop!(l4);
                 let ot = fixed_u16!();
                 let oid = fixed_u64!();
-                Value::ObjectRef(ot, oid)
+                Value::ObjectRef(ObjectRef { ot, oid })
             },
         })
     }

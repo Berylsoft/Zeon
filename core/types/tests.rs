@@ -47,7 +47,7 @@ fn test() {
             Value::Enum(TypePtr::from_u16(0x5f49), 5, Box::new(Value::Int(5))),
             Value::Enum(TypePtr::from_u16(0x00aa), 163, Box::new(Value::UInt(12))),
             Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(TypePtr::from_u16(0xfe50))))))),
-            Value::ObjectRef(0x0123, 0x0123456789abcdef),
+            Value::ObjectRef(ObjectRef { ot: 0x0123, oid: 0x0123456789abcdef }),
             Value::Option(Type::Tuple(vec![Type::Int, Type::Unit]), Box::new(Some(Value::Tuple(vec![Value::Int(9), Value::Unit])))),
         ]),
         hex!("

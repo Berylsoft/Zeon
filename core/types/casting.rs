@@ -80,22 +80,22 @@ impl Type {
 impl Value {
     pub const fn as_tag(&self) -> Tag {
         match self {
-            Value::Unit            => Tag::Unit,
-            Value::Bool(_)         => Tag::Bool,
-            Value::Int(_)          => Tag::Int,
-            Value::UInt(_)         => Tag::UInt,
-            Value::Float(_)        => Tag::Float,
-            Value::String(_)       => Tag::String,
-            Value::Bytes(_)        => Tag::Bytes,
-            Value::Option(_, _)    => Tag::Option,
-            Value::List(_, _)      => Tag::List,
-            Value::Map(_, _)       => Tag::Map,
-            Value::Tuple(_)        => Tag::Tuple,
-            Value::Alias(_, _)     => Tag::Alias,
-            Value::Enum(_, _, _)   => Tag::Enum,
-            Value::Struct(_, _)    => Tag::Struct,
-            Value::Type(_)         => Tag::Type,
-            Value::ObjectRef(_, _) => Tag::ObjectRef,
+            Value::Unit          => Tag::Unit,
+            Value::Bool(_)       => Tag::Bool,
+            Value::Int(_)        => Tag::Int,
+            Value::UInt(_)       => Tag::UInt,
+            Value::Float(_)      => Tag::Float,
+            Value::String(_)     => Tag::String,
+            Value::Bytes(_)      => Tag::Bytes,
+            Value::Option(_, _)  => Tag::Option,
+            Value::List(_, _)    => Tag::List,
+            Value::Map(_, _)     => Tag::Map,
+            Value::Tuple(_)      => Tag::Tuple,
+            Value::Alias(_, _)   => Tag::Alias,
+            Value::Enum(_, _, _) => Tag::Enum,
+            Value::Struct(_, _)  => Tag::Struct,
+            Value::Type(_)       => Tag::Type,
+            Value::ObjectRef(_)  => Tag::ObjectRef,
         }
     }
 
@@ -116,7 +116,7 @@ impl Value {
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
-            Value::ObjectRef(_, _) => Type::ObjectRef,
+            Value::ObjectRef(_) => Type::ObjectRef,
         }
     }
 }
@@ -222,7 +222,7 @@ impl Value {
         unreachable!()
     }
 
-    pub fn into_enum(self) -> (EnumVarient, Value) {
+    pub fn into_enum(self) -> (EnumVariant, Value) {
         if let Value::Enum(_ptr, ev, v) = self {
             return (ev, *v);
         }
@@ -244,8 +244,8 @@ impl Value {
     }
 
     pub fn into_objectref(self) -> ObjectRef {
-        if let Value::ObjectRef(ot, oid) = self {
-            return ObjectRef { ot, oid };
+        if let Value::ObjectRef(v) = self {
+            return v;
         }
         unreachable!()
     }

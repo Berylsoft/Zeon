@@ -1,5 +1,5 @@
 macros::bin_struct! {
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct Timestamp {
         pub secs: i64,
         pub nanos: u32,
@@ -31,7 +31,7 @@ impl Timestamp {
 }
 
 macros::bin_struct! {
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct ObjectRef {
         pub ot: u16,
         pub oid: u64,

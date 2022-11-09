@@ -1,3 +1,5 @@
+use crate::metadata::ObjectRef;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TypePtr {
     Std(StdPtr),
@@ -7,7 +9,7 @@ pub enum TypePtr {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StdPtr(u16);
 
-pub type EnumVarient = u8;
+pub type EnumVariant = u8;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
@@ -75,11 +77,11 @@ pub enum Value {
     Tuple(Vec<Value>),
 
     Alias(TypePtr, Box<Value>),
-    Enum(TypePtr, EnumVarient, Box<Value>),
+    Enum(TypePtr, EnumVariant, Box<Value>),
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),
-    ObjectRef(u16, u64),
+    ObjectRef(ObjectRef),
 }
 
 mod casting;
