@@ -128,6 +128,8 @@ deftypes! {
 
 pub static DEFTYPES: Lazy<BTreeMap<u16, DefType>> = Lazy::new(init_deftypes);
 
+pub mod codegen;
+
 #[cfg(test)]
 mod test {
     use super::*;
