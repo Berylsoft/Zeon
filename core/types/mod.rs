@@ -110,12 +110,7 @@ pub trait Schema {
     fn deserialize(val: Value) -> Self;
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum DefType {
-    Alias(Type),
-    Enum(Vec<(String, Type)>),
-    Struct(Vec<(String, Type)>),
-}
+pub use crate::std::codegen::types::Deftype as DefType;
 
 #[cfg(test)]
 mod tests;
