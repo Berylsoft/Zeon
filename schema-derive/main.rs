@@ -195,22 +195,22 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
     match dt {
         DefType::Alias(ty) => {
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
-            let inner_ty = type2type(ty.clone());
-            let inner_ser = type2ser(ty.clone(), quote!(self.0));
-            let inner_de = type2de(ty.clone(), quote!(val));
+            let ser = type2ser(ty.clone(), quote!(self.0));
+            let de = type2de(ty.clone(), quote!(val));
+            let ty = type2type(ty);
             quote!(
                 #[derive(Clone, Debug, PartialEq, Eq)]
-                pub struct #name(pub #inner_ty);
+                pub struct #name(pub #ty);
 
                 impl Schema for #name {
                     const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
 
                     fn serialize(self) -> Value {
-                        #inner_ser
+                        #ser
                     }
 
                     fn deserialize(val: Value) -> Self {
-                        Self(#inner_de)
+                        Self(#de)
                     }
                 }
             )
@@ -222,16 +222,16 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let names2 = names.clone();
             let names3 = names.clone();
             let names4 = names.clone();
-            let tyts = tys.clone().into_iter().map(type2type);
             let i = (0..variants.len() as u8).map(|i| quote!(#i));
             let i2 = i.clone();
             let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
-            let des = tys.into_iter().map(|ty| type2de(ty, quote!(val)));
+            let des = tys.clone().into_iter().map(|ty| type2de(ty, quote!(val)));
+            let tys = tys.into_iter().map(type2type);
 
             quote!(
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 pub enum #name {
-                    #(#names(#tyts),)*
+                    #(#names(#tys),)*
                 }
 
                 impl Schema for #name {
@@ -241,10 +241,10 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                         Value::Enum(
                             TypePtr::from_u16_unchecked(#ptr),
                             match &self {
-                                #(Self::#names4(_) => #i2,)*
+                                #(Self::#names2(_) => #i,)*
                             },
                             Box::new(match self {
-                                #(Self::#names2(val) => #sers,)*
+                                #(Self::#names3(val) => #sers,)*
                             }),
                         )
                     }
@@ -252,7 +252,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                     fn deserialize(val: Value) -> Self {
                         let (variant, val) = val.into_enum();
                         match variant {
-                            #(#i => Self::#names3(#des),)*
+                            #(#i2 => Self::#names4(#des),)*
                             _ => unreachable!(),
                         }
                     }
@@ -266,14 +266,14 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let names = names.into_iter().map(|name| ident(to_snake_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
-            let tyts = tys.clone().into_iter().map(type2type);
             let sers = fields.clone().into_iter().map(|(name, ty)| type2ser(ty, ident(macros::concat_string!("self.", to_snake_case(&name)))));
             let des = fields.into_iter().map(|(name, ty)| type2de(ty, ident(to_snake_case(&name))));
+            let tys = tys.into_iter().map(type2type);
             
             quote!(
                 #[derive(Clone, Debug, PartialEq, Eq)]
                 pub struct #name {
-                    #(pub #names: #tyts,)*
+                    #(pub #names: #tys,)*
                 }
 
                 impl Schema for #name {
@@ -286,9 +286,9 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                     }
 
                     fn deserialize(val: Value) -> Self {
-                        let [#(#names3,)*]: [Value; #len] = val.into_struct().try_into().unwrap();
+                        let [#(#names2,)*]: [Value; #len] = val.into_struct().try_into().unwrap();
                         Self {
-                            #(#names2: #des,)*
+                            #(#names3: #des,)*
                         }
                     }
                 }
@@ -298,17 +298,12 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
 }
 
 fn derive_file() -> TokenStream {
-    use std::collections::HashMap;
-    macro_rules! assert_none {
-        ($r:expr) => {
-            assert!(matches!($r, None))
-        };
-    }
-    let mut map = HashMap::new();
+    use indexmap::{IndexMap, map::Entry};
+    let mut map = IndexMap::new();
     for ptr in DEFTYPES.keys() {
         let path = ptr2path(*ptr).unwrap().to_rust_middle_path();
-        if !map.contains_key(&path) {
-            assert_none!(map.insert(path, Vec::new()));
+        if let Entry::Vacant(e) = map.entry(path) {
+            e.insert(Vec::new());
         }
     }
     for (ptr, dt) in DEFTYPES.iter() {
@@ -316,7 +311,7 @@ fn derive_file() -> TokenStream {
         let out = derive_def(*ptr, dt.clone());
         map.get_mut(&path).unwrap().push(out);
     }
-    let mut file = quote!(#![allow(non_camel_case_types, unused_imports)]);
+    let mut file = quote!(#![allow(non_camel_case_types, unused_imports, clippy::unit_arg, clippy::let_unit_value)]);
     file.extend(map.into_iter().map(|(path, outs)| {
         let path = ident(path);
         quote!(
@@ -330,7 +325,8 @@ fn derive_file() -> TokenStream {
 }
 
 fn main() {
-    // // use std::{fs::OpenOptions, env::args};
-    // // let f = OpenOptions::new().create_new(true).write(true).open(args().next().unwrap()).unwrap();
-    println!("{}", derive_file());
+    use std::{fs::OpenOptions, env::args, io::Write};
+    let mut f = OpenOptions::new().write(true).truncate(true).open(args().nth(1).unwrap()).unwrap();
+    f.write_all(b"// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.\n").unwrap();
+    f.write_all(derive_file().to_string().as_bytes()).unwrap();
 }

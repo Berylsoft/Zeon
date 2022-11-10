@@ -1,6 +1,188 @@
-// This is a generated file. Do not modify, run `cargo run --bin schema-derive` to update.
-
-#![allow(non_camel_case_types, unused_imports)]
+// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.
+#![allow(
+    non_camel_case_types,
+    unused_imports,
+    clippy::unit_arg,
+    clippy::let_unit_value
+)]
+pub mod types {
+    use crate::{meta::ObjectRef, types::*};
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub enum Deftype {
+        Alias(Type),
+        Enum(Vec<(String, Type)>),
+        Struct(Vec<(String, Type)>),
+    }
+    impl Schema for Deftype {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(0u16);
+        fn serialize(self) -> Value {
+            Value::Enum(
+                TypePtr::from_u16_unchecked(0u16),
+                match &self {
+                    Self::Alias(_) => 0u8,
+                    Self::Enum(_) => 1u8,
+                    Self::Struct(_) => 2u8,
+                },
+                Box::new(match self {
+                    Self::Alias(val) => Value::Type(val),
+                    Self::Enum(val) => Value::Map(
+                        (Type::String, Type::Type),
+                        val.into_iter()
+                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
+                            .collect(),
+                    ),
+                    Self::Struct(val) => Value::Map(
+                        (Type::String, Type::Type),
+                        val.into_iter()
+                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
+                            .collect(),
+                    ),
+                }),
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let (variant, val) = val.into_enum();
+            match variant {
+                0u8 => Self::Alias(val.into_type()),
+                1u8 => Self::Enum(
+                    val.into_map()
+                        .into_iter()
+                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
+                        .collect(),
+                ),
+                2u8 => Self::Struct(
+                    val.into_map()
+                        .into_iter()
+                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
+                        .collect(),
+                ),
+                _ => unreachable!(),
+            }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct TraitAttr {
+        pub attr_type: super::types::TraitAttrType,
+        pub name: super::prim::SimpleName,
+        pub val_type: Type,
+    }
+    impl Schema for TraitAttr {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(2u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(2u16),
+                vec![
+                    self.attr_type.serialize(),
+                    self.name.serialize(),
+                    Value::Type(self.val_type),
+                ],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [attr_type, name, val_type]: [Value; 3usize] =
+                val.into_struct().try_into().unwrap();
+            Self {
+                attr_type: attr_type.deserialize_into(),
+                name: name.deserialize_into(),
+                val_type: val_type.into_type(),
+            }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub enum TraitAttrType {
+        Const(()),
+        Mut(()),
+        Iter(()),
+        Iterset(()),
+        Complex(()),
+    }
+    impl Schema for TraitAttrType {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(3u16);
+        fn serialize(self) -> Value {
+            Value::Enum(
+                TypePtr::from_u16_unchecked(3u16),
+                match &self {
+                    Self::Const(_) => 0u8,
+                    Self::Mut(_) => 1u8,
+                    Self::Iter(_) => 2u8,
+                    Self::Iterset(_) => 3u8,
+                    Self::Complex(_) => 4u8,
+                },
+                Box::new(match self {
+                    Self::Const(val) => {
+                        let _ = val;
+                        Value::Unit
+                    }
+                    Self::Mut(val) => {
+                        let _ = val;
+                        Value::Unit
+                    }
+                    Self::Iter(val) => {
+                        let _ = val;
+                        Value::Unit
+                    }
+                    Self::Iterset(val) => {
+                        let _ = val;
+                        Value::Unit
+                    }
+                    Self::Complex(val) => {
+                        let _ = val;
+                        Value::Unit
+                    }
+                }),
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let (variant, val) = val.into_enum();
+            match variant {
+                0u8 => Self::Const(val.into_unit()),
+                1u8 => Self::Mut(val.into_unit()),
+                2u8 => Self::Iter(val.into_unit()),
+                3u8 => Self::Iterset(val.into_unit()),
+                4u8 => Self::Complex(val.into_unit()),
+                _ => unreachable!(),
+            }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct Trait {
+        pub attrs: Vec<super::types::TraitAttr>,
+        pub extends: Vec<super::meta::Typeptr>,
+    }
+    impl Schema for Trait {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(5u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(5u16),
+                vec![
+                    Value::List(
+                        Type::Enum(TypePtr::from_u16_unchecked(2u16)),
+                        self.attrs.into_iter().map(|sv| sv.serialize()).collect(),
+                    ),
+                    Value::List(
+                        Type::Enum(TypePtr::from_u16_unchecked(7u16)),
+                        self.extends.into_iter().map(|sv| sv.serialize()).collect(),
+                    ),
+                ],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [attrs, extends]: [Value; 2usize] = val.into_struct().try_into().unwrap();
+            Self {
+                attrs: attrs
+                    .into_list()
+                    .into_iter()
+                    .map(|sv| sv.deserialize_into())
+                    .collect(),
+                extends: extends
+                    .into_list()
+                    .into_iter()
+                    .map(|sv| sv.deserialize_into())
+                    .collect(),
+            }
+        }
+    }
+}
 pub mod prim {
     use crate::{meta::ObjectRef, types::*};
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -197,184 +379,6 @@ pub mod meta {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_uint())
-        }
-    }
-}
-pub mod types {
-    use crate::{meta::ObjectRef, types::*};
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub enum Deftype {
-        Alias(Type),
-        Enum(Vec<(String, Type)>),
-        Struct(Vec<(String, Type)>),
-    }
-    impl Schema for Deftype {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(0u16);
-        fn serialize(self) -> Value {
-            Value::Enum(
-                TypePtr::from_u16_unchecked(0u16),
-                match &self {
-                    Self::Alias(_) => 0u8,
-                    Self::Enum(_) => 1u8,
-                    Self::Struct(_) => 2u8,
-                },
-                Box::new(match self {
-                    Self::Alias(val) => Value::Type(val),
-                    Self::Enum(val) => Value::Map(
-                        (Type::String, Type::Type),
-                        val.into_iter()
-                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
-                            .collect(),
-                    ),
-                    Self::Struct(val) => Value::Map(
-                        (Type::String, Type::Type),
-                        val.into_iter()
-                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
-                            .collect(),
-                    ),
-                }),
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let (variant, val) = val.into_enum();
-            match variant {
-                0u8 => Self::Alias(val.into_type()),
-                1u8 => Self::Enum(
-                    val.into_map()
-                        .into_iter()
-                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
-                        .collect(),
-                ),
-                2u8 => Self::Struct(
-                    val.into_map()
-                        .into_iter()
-                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
-                        .collect(),
-                ),
-                _ => unreachable!(),
-            }
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct TraitField {
-        pub field_type: super::types::TraitFieldType,
-        pub name: super::prim::SimpleName,
-        pub val_type: Type,
-    }
-    impl Schema for TraitField {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(2u16);
-        fn serialize(self) -> Value {
-            Value::Struct(
-                TypePtr::from_u16_unchecked(2u16),
-                vec![
-                    self.field_type.serialize(),
-                    self.name.serialize(),
-                    Value::Type(self.val_type),
-                ],
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let [field_type, name, val_type]: [Value; 3usize] =
-                val.into_struct().try_into().unwrap();
-            Self {
-                field_type: field_type.deserialize_into(),
-                name: name.deserialize_into(),
-                val_type: val_type.into_type(),
-            }
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub enum TraitFieldType {
-        Const(()),
-        Mut(()),
-        Iter(()),
-        Iterset(()),
-        Complex(()),
-    }
-    impl Schema for TraitFieldType {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(3u16);
-        fn serialize(self) -> Value {
-            Value::Enum(
-                TypePtr::from_u16_unchecked(3u16),
-                match &self {
-                    Self::Const(_) => 0u8,
-                    Self::Mut(_) => 1u8,
-                    Self::Iter(_) => 2u8,
-                    Self::Iterset(_) => 3u8,
-                    Self::Complex(_) => 4u8,
-                },
-                Box::new(match self {
-                    Self::Const(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Mut(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Iter(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Iterset(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Complex(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                }),
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let (variant, val) = val.into_enum();
-            match variant {
-                0u8 => Self::Const(val.into_unit()),
-                1u8 => Self::Mut(val.into_unit()),
-                2u8 => Self::Iter(val.into_unit()),
-                3u8 => Self::Iterset(val.into_unit()),
-                4u8 => Self::Complex(val.into_unit()),
-                _ => unreachable!(),
-            }
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct Trait {
-        pub fields: Vec<super::types::TraitField>,
-        pub extends: Vec<super::meta::Typeptr>,
-    }
-    impl Schema for Trait {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(5u16);
-        fn serialize(self) -> Value {
-            Value::Struct(
-                TypePtr::from_u16_unchecked(5u16),
-                vec![
-                    Value::List(
-                        Type::Enum(TypePtr::from_u16_unchecked(2u16)),
-                        self.fields.into_iter().map(|sv| sv.serialize()).collect(),
-                    ),
-                    Value::List(
-                        Type::Enum(TypePtr::from_u16_unchecked(7u16)),
-                        self.extends.into_iter().map(|sv| sv.serialize()).collect(),
-                    ),
-                ],
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let [fields, extends]: [Value; 2usize] = val.into_struct().try_into().unwrap();
-            Self {
-                fields: fields
-                    .into_list()
-                    .into_iter()
-                    .map(|sv| sv.deserialize_into())
-                    .collect(),
-                extends: extends
-                    .into_list()
-                    .into_iter()
-                    .map(|sv| sv.deserialize_into())
-                    .collect(),
-            }
         }
     }
 }

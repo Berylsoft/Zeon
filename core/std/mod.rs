@@ -115,6 +115,7 @@ macro_rules! deftypes {
                     Enum(ty!(:$p :$n))
                 };
             }
+            #[allow(unused_macros)]
             macro_rules! struct_t {
                 (:$p:literal :$n:literal) => {
                     Struct(ty!(:$p :$n))
@@ -129,6 +130,10 @@ macro_rules! deftypes {
 
 // endregion
 
+// region: deftrait macros
+
+// endregion
+
 // If there is a duplicate ptr, the generated `ptr2path` will raise an `unreachable_patterns` warning
 deftypes! {
     0x0000 | std :"types" :"deftype" -> def_enum! {
@@ -137,12 +142,12 @@ deftypes! {
         "struct" -> map!(String, Type)
     }
     0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
-    0x0002 | std :"types" :"trait-field" -> def_struct! {
-        "field-type" -> enum_t!(:"types" :"trait-field-type")
+    0x0002 | std :"types" :"trait-attr" -> def_struct! {
+        "attr-type" -> enum_t!(:"types" :"trait-attr-type")
         "name"       -> alias_t!(:"prim" :"simple-name")
         "val-type"   -> Type
     }
-    0x0003 | std :"types" :"trait-field-type" -> def_enum! {
+    0x0003 | std :"types" :"trait-attr-type" -> def_enum! {
         "const"
         "mut"
         "iter"
@@ -151,7 +156,7 @@ deftypes! {
     }
     0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
     0x0005 | std :"types" :"trait" -> def_struct! {
-        "fields"  -> list!(enum_t!(:"types" :"trait-field"))
+        "attrs"  -> list!(enum_t!(:"types" :"trait-attr"))
         "extends" -> list!(enum_t!(:"meta" :"typeptr"))
     }
     0x0006 | std :"pattern" :"refset-item" -> def_enum! {
