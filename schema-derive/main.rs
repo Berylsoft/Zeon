@@ -1,16 +1,21 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::{types::{Type, TypePtr, DefType}, std::DEFTYPES, util::{to_pascal_case, to_snake_case}};
+use zeon::{types::{Type, TypePtr, DefType}, std::{DEFTYPES, ptr2path}, util::{to_pascal_case, to_snake_case}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
 }
 
-fn ptr2rustpathname(ptr: TypePtr) -> TokenStream {
+fn ptr2rustname(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
-    let path = zeon::std::ptr2path(ptr).unwrap();
-    let path = ident(path.to_rust_pathname());
-    quote!(#path)
+    let path = ptr2path(ptr).unwrap();
+    ident(path.to_rust_name())
+}
+
+fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
+    let ptr = ptr.as_std_inner().unwrap();
+    let path = ptr2path(ptr).unwrap();
+    ident(macros::concat_string!("super::", path.to_rust_path()))
 }
 
 fn ptr2tokens(ptr: TypePtr) -> TokenStream {
@@ -103,7 +108,7 @@ fn type2type(ty: Type) -> TokenStream {
         
         Type::Alias(ptr) |
         Type::Enum(ptr) |
-        Type::Struct(ptr) => ptr2rustpathname(ptr),
+        Type::Struct(ptr) => ptr2rustpath(ptr),
     }
 }
 
@@ -189,7 +194,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
 fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
     match dt {
         DefType::Alias(ty) => {
-            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let inner_ty = type2type(ty.clone());
             let inner_ser = type2ser(ty.clone(), quote!(self.0));
             let inner_de = type2de(ty.clone(), quote!(val));
@@ -211,7 +216,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Enum(variants) => {
-            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let (names, tys): (Vec<String>, Vec<Type>) = variants.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
@@ -255,7 +260,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Struct(fields) => {
-            let name = ptr2rustpathname(TypePtr::from_u16_unchecked(ptr));
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let len = fields.len();
             let (names, tys): (Vec<String>, Vec<Type>) = fields.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_snake_case(&name)));
@@ -292,16 +297,44 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
     }
 }
 
-fn prelude() -> TokenStream {
-    quote!(
-        #![allow(non_camel_case_types)]
-        use crate::{types::*, metadata::ObjectRef};
-    )
-}
-
 fn main() {
-    println!("{}", prelude());
-    for (ptr, dt) in DEFTYPES.iter() {
-        println!("{}", derive_def(*ptr, dt.clone()));
+    // // use std::{fs::OpenOptions, env::args};
+    // // let f = OpenOptions::new().create_new(true).write(true).open(args().next().unwrap()).unwrap();
+    use std::collections::HashMap;
+    macro_rules! assert_none {
+        ($r:expr) => {
+            assert!(matches!($r, None))
+        };
     }
+    let mut map = HashMap::new();
+    for ptr in DEFTYPES.keys() {
+        let path = ptr2path(*ptr).unwrap().to_rust_middle_path();
+        if !map.contains_key(&path) {
+            assert_none!(map.insert(path, Vec::new()));
+        }
+    }
+    for (ptr, dt) in DEFTYPES.iter() {
+        let path = ptr2path(*ptr).unwrap().to_rust_middle_path();
+        let out = derive_def(*ptr, dt.clone());
+        map.get_mut(&path).unwrap().push(out);
+    }
+    let mut buf = String::new();
+    macro_rules! s {
+        ($s:expr) => {
+            buf.push_str(&$s)
+        };
+    }
+    s!("#![allow(non_camel_case_types, unused_imports)]");
+    for (path, outs) in map {
+        s!("pub mod ");
+        s!(path);
+        s!(" {\n");
+        s!("use crate::{types::*, metadata::ObjectRef};");
+        for out in outs {
+            s!(out.to_string());
+            s!("\n");
+        }
+        s!("}\n")
+    }
+    println!("{}", buf);
 }

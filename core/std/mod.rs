@@ -22,9 +22,14 @@ impl Path {
         crate::util::to_pascal_case(self.name)
     }
 
+    pub fn to_rust_middle_path(&self) -> String {
+        assert!(matches!(self.path.find(':'), None));
+        crate::util::to_snake_case(self.path) // .replace(':', "::")
+    }
+
     pub fn to_rust_path(&self) -> String {
         macros::concat_string!(
-            crate::util::to_snake_case(self.path).replace(":", "::"),
+            self.to_rust_middle_path(),
             "::", self.to_rust_name()
         )
     }
@@ -32,15 +37,8 @@ impl Path {
     pub fn to_rust_full_path(&self) -> String {
         macros::concat_string!(
             "zeon::std::codegen",
-            "::", crate::util::to_snake_case(self.path).replace(":", "::"),
+            "::", self.to_rust_middle_path(),
             "::", self.to_rust_name()
-        )
-    }
-
-    pub fn to_rust_pathname(&self) -> String {
-        macros::concat_string!(
-            crate::util::to_snake_case(self.path).replace(":", "_"),
-            "_", self.to_rust_name()
         )
     }
 }
@@ -158,7 +156,6 @@ mod test {
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_name(), "UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_path(), "prim::UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_full_path(), "zeon::std::codegen::prim::UnixTs");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rust_pathname(), "prim_UnixTs");
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(DEFTYPES.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }
