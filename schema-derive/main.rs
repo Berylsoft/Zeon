@@ -223,7 +223,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let names3 = names.clone();
             let names4 = names.clone();
             let tyts = tys.clone().into_iter().map(type2type);
-            let i = (0..variants.len()).map(syn::Index::from);
+            let i = (0..variants.len() as u8).map(|i| quote!(#i));
             let i2 = i.clone();
             let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
             let des = tys.into_iter().map(|ty| type2de(ty, quote!(val)));
@@ -297,9 +297,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
     }
 }
 
-fn main() {
-    // // use std::{fs::OpenOptions, env::args};
-    // // let f = OpenOptions::new().create_new(true).write(true).open(args().next().unwrap()).unwrap();
+fn derive_file() -> TokenStream {
     use std::collections::HashMap;
     macro_rules! assert_none {
         ($r:expr) => {
@@ -318,23 +316,21 @@ fn main() {
         let out = derive_def(*ptr, dt.clone());
         map.get_mut(&path).unwrap().push(out);
     }
-    let mut buf = String::new();
-    macro_rules! s {
-        ($s:expr) => {
-            buf.push_str(&$s)
-        };
-    }
-    s!("#![allow(non_camel_case_types, unused_imports)]");
-    for (path, outs) in map {
-        s!("pub mod ");
-        s!(path);
-        s!(" {\n");
-        s!("use crate::{types::*, meta::ObjectRef};");
-        for out in outs {
-            s!(out.to_string());
-            s!("\n");
-        }
-        s!("}\n")
-    }
-    println!("{}", buf);
+    let mut file = quote!(#![allow(non_camel_case_types, unused_imports)]);
+    file.extend(map.into_iter().map(|(path, outs)| {
+        let path = ident(path);
+        quote!(
+            pub mod #path {
+                use crate::{types::*, meta::ObjectRef};
+                #(#outs)*
+            }
+        )
+    }));
+    file
+}
+
+fn main() {
+    // // use std::{fs::OpenOptions, env::args};
+    // // let f = OpenOptions::new().create_new(true).write(true).open(args().next().unwrap()).unwrap();
+    println!("{}", derive_file());
 }

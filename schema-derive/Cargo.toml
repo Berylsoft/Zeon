@@ -13,7 +13,6 @@ path = "main.rs"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "1"
 hex = "*"
 macros = { git = "https://github.com/Berylsoft/rust-macros" }
 zeon = { path = "../core" }
