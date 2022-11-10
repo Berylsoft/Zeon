@@ -1,4 +1,4 @@
-use crate::metadata::ObjectRef;
+use crate::meta::ObjectRef;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TypePtr {

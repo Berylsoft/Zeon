@@ -329,7 +329,7 @@ fn main() {
         s!("pub mod ");
         s!(path);
         s!(" {\n");
-        s!("use crate::{types::*, metadata::ObjectRef};");
+        s!("use crate::{types::*, meta::ObjectRef};");
         for out in outs {
             s!(out.to_string());
             s!("\n");
