@@ -40,6 +40,17 @@ pub const fn check_stdptr(n: u16) -> bool {
     h8 != 0xFF
 }
 
+pub const fn typehash_to_u64(hash: [u8; 7]) -> u64 {
+    let [d1, d2, d3, d4, d5, d6, d7] = hash;
+    u64::from_be_bytes([0, d1, d2, d3, d4, d5, d6, d7])
+}
+
+pub const fn u64_to_typehash(n: u64) -> [u8; 7] {
+    let [_d0, d1, d2, d3, d4, d5, d6, d7] = n.to_be_bytes();
+    // assert!(d0, 0);
+    [d1, d2, d3, d4, d5, d6, d7]
+}
+
 pub fn to_snake_case(path: &str) -> String {
     use convert_case::{Case, Casing};
     path.to_case(Case::Snake)

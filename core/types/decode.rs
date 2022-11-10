@@ -97,7 +97,7 @@ macro_rules! decode_macros {
                     },
                     h8 => {
                         let l8 = u8!();
-                        TypePtr::Std(StdPtr(u16::from_be_bytes([h8, l8])))
+                        TypePtr::from_u16_unchecked(u16::from_be_bytes([h8, l8]))
                     },
                 }
             }};

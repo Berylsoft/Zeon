@@ -78,8 +78,8 @@ macro_rules! encode_macros {
         macro_rules! typeptr {
             ($ptr:expr) => {
                 match $ptr {
-                    TypePtr::Std(StdPtr(stdptr)) => {
-                        fixed!(stdptr);
+                    TypePtr::Std(stdptr) => {
+                        fixed!(stdptr.to_u16());
                     },
                     TypePtr::Hash(hash) => {
                         u8!(0xFF);

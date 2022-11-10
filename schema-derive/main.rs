@@ -21,7 +21,7 @@ fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
 fn ptr2tokens(ptr: TypePtr) -> TokenStream {
     match ptr {
         TypePtr::Std(ptr) => {
-            let n = ptr.as_u16();
+            let n = ptr.to_u16();
             quote!(TypePtr::from_u16_unchecked(#n))
         },
         TypePtr::Hash(hash) => {
@@ -153,7 +153,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
 
 fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
     match ty {
-        Type::Unit => quote!({drop(#v); Value::Unit}),
+        Type::Unit => quote!({let _ = #v; Value::Unit}),
         Type::Bool => quote!(Value::Bool(#v)),
         Type::Int => quote!(Value::Int(#v)),
         Type::UInt => quote!(Value::UInt(#v)),
