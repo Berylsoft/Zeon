@@ -100,9 +100,24 @@ macro_rules! deftypes {
                     Map(Box::new($tyk), Box::new($tyv))
                 };
             }
-            macro_rules! ptr {
-                ($n:expr) => {
-                    TypePtr::from_u16_unchecked($n)
+            macro_rules! ty {
+                (:$p:literal :$n:literal) => {
+                    TypePtr::from_u16_unchecked(path2ptr(Path { path: $p, name: $n }).unwrap())
+                };
+            }
+            macro_rules! alias_t {
+                (:$p:literal :$n:literal) => {
+                    Alias(ty!(:$p :$n))
+                };
+            }
+            macro_rules! enum_t {
+                (:$p:literal :$n:literal) => {
+                    Enum(ty!(:$p :$n))
+                };
+            }
+            macro_rules! struct_t {
+                (:$p:literal :$n:literal) => {
+                    Struct(ty!(:$p :$n))
                 };
             }
             [
@@ -123,28 +138,54 @@ deftypes! {
     }
     0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
     0x0002 | std :"types" :"trait-field" -> def_struct! {
-        "field-type" -> Enum(ptr!(0x0003))
-        "name"       -> Alias(ptr!(0x0004))
+        "field-type" -> enum_t!(:"types" :"trait-field-type")
+        "name"       -> alias_t!(:"prim" :"simple-name")
         "val-type"   -> Type
     }
     0x0003 | std :"types" :"trait-field-type" -> def_enum! {
         "const"
         "mut"
         "iter"
+        "iterset"
+        "complex"
     }
     0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
     0x0005 | std :"types" :"trait" -> def_struct! {
-        "fields" -> list!(Enum(ptr!(0x0002)))
+        "fields"  -> list!(enum_t!(:"types" :"trait-field"))
+        "extends" -> list!(enum_t!(:"meta" :"typeptr"))
     }
     0x0006 | std :"pattern" :"refset-item" -> def_enum! {
         "remove" -> ObjectRef
         "add"    -> ObjectRef
     }
+    0x0007 | std :"meta" :"typeptr" -> def_enum! {
+        "std"  -> alias_t!(:"meta" :"typeptr-std")
+        "hash" -> alias_t!(:"meta" :"typeptr-hash")
+    }
+    0x0008 | std :"prim" :"u8" -> def_alias! (UInt)
+    0x0009 | std :"prim" :"u16" -> def_alias! (UInt)
+    0x000A | std :"prim" :"u32" -> def_alias! (UInt)
+    0x000B | std :"prim" :"i8" -> def_alias! (Int)
+    0x000C | std :"prim" :"i16" -> def_alias! (Int)
+    0x000D | std :"prim" :"i32" -> def_alias! (Int)
+    0x000E | std :"meta" :"typeptr-std" -> def_alias! (UInt)
+    0x000F | std :"meta" :"typeptr-hash" -> def_alias! (UInt)
+    0x0010 | std :"meta" :"object-type" -> def_alias! (UInt)
+    0x0011 | std :"meta" :"object-id" -> def_alias! (UInt)
 }
+
+/*
+deftraits! {
+    0x8000 | std :"meta" :"name" -> def_trait! {
+        Mut "name" -> alias_t!(:"prim" :"simple-name")
+    } // extends ty!(...) + ty!(..)
+}
+*/
 
 pub static DEFTYPES: Lazy<BTreeMap<u16, DefType>> = Lazy::new(init_deftypes);
 
 pub mod codegen;
+pub mod casting;
 
 #[cfg(test)]
 mod test {
