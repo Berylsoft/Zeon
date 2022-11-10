@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::{types::{Type, TypePtr, DefType}, std::{DEFTYPES, ptr2path}, util::{to_pascal_case, to_snake_case}};
+use zeon::{types::{Type, TypePtr, DefType}, std::{ptr2path, init_deftypes}, util::{to_pascal_case, to_snake_case}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
@@ -15,7 +15,7 @@ fn ptr2rustname(ptr: TypePtr) -> TokenStream {
 fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
     let ptr = ptr.as_std_inner().unwrap();
     let path = ptr2path(ptr).unwrap();
-    ident(macros::concat_string!("super::", path.to_rust_path()))
+    ident(path.to_rust_self_path())
 }
 
 fn ptr2tokens(ptr: TypePtr) -> TokenStream {
@@ -299,16 +299,17 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
 
 fn derive_file() -> TokenStream {
     use indexmap::{IndexMap, map::Entry};
+    let deftypes = init_deftypes();
     let mut map = IndexMap::new();
-    for ptr in DEFTYPES.keys() {
-        let path = ptr2path(*ptr).unwrap().to_rust_middle_path();
+    for ptr in deftypes.keys() {
+        let path = ptr2path(*ptr).unwrap().to_rust_path();
         if let Entry::Vacant(e) = map.entry(path) {
             e.insert(Vec::new());
         }
     }
-    for (ptr, dt) in DEFTYPES.iter() {
-        let path = ptr2path(*ptr).unwrap().to_rust_middle_path();
-        let out = derive_def(*ptr, dt.clone());
+    for (ptr, dt) in deftypes {
+        let path = ptr2path(ptr).unwrap().to_rust_path();
+        let out = derive_def(ptr, dt);
         map.get_mut(&path).unwrap().push(out);
     }
     let mut file = quote!(#![allow(non_camel_case_types, unused_imports, clippy::unit_arg, clippy::let_unit_value)]);
@@ -325,8 +326,10 @@ fn derive_file() -> TokenStream {
 }
 
 fn main() {
-    use std::{fs::OpenOptions, env::args, io::Write};
-    let mut f = OpenOptions::new().write(true).truncate(true).open(args().nth(1).unwrap()).unwrap();
+    use std::{fs::OpenOptions, env::args_os, io::Write, process::Command};
+    let path = args_os().nth(1).unwrap();
+    let mut f = OpenOptions::new().write(true).truncate(true).open(&path).unwrap();
     f.write_all(b"// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.\n").unwrap();
     f.write_all(derive_file().to_string().as_bytes()).unwrap();
+    assert!(Command::new("rustfmt").arg(&path).status().unwrap().success());
 }

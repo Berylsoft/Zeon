@@ -1,5 +1,4 @@
 use ::std::collections::BTreeMap;
-use once_cell::sync::Lazy;
 use crate::types::*;
 
 #[derive(Clone, Debug)]
@@ -22,22 +21,22 @@ impl Path {
         crate::util::to_pascal_case(self.name)
     }
 
-    pub fn to_rust_middle_path(&self) -> String {
-        assert!(matches!(self.path.find(':'), None));
-        crate::util::to_snake_case(self.path) // .replace(':', "::")
+    pub fn to_rust_path(&self) -> String {
+        crate::util::to_snake_case(self.path).replace(':', "_")
     }
 
-    pub fn to_rust_path(&self) -> String {
+    pub fn to_rust_self_path(&self) -> String {
         macros::concat_string!(
-            self.to_rust_middle_path(),
+            "super",
+            "::", self.to_rust_path(),
             "::", self.to_rust_name()
         )
     }
 
-    pub fn to_rust_full_path(&self) -> String {
+    pub fn to_rust_foreign_path(&self) -> String {
         macros::concat_string!(
             "zeon::std::codegen",
-            "::", self.to_rust_middle_path(),
+            "::", self.to_rust_path(),
             "::", self.to_rust_name()
         )
     }
@@ -187,8 +186,6 @@ deftraits! {
 }
 */
 
-pub static DEFTYPES: Lazy<BTreeMap<u16, DefType>> = Lazy::new(init_deftypes);
-
 pub mod codegen;
 pub mod casting;
 
@@ -198,11 +195,12 @@ mod test {
 
     #[test]
     fn test() {
+        let deftypes = init_deftypes();
         assert_eq!(ptr2path(0x0001).unwrap().to_path(), "std:prim:unix-ts");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_name(), "UnixTs");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rust_path(), "prim::UnixTs");
-        assert_eq!(ptr2path(0x0001).unwrap().to_rust_full_path(), "zeon::std::codegen::prim::UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_self_path(), "super::prim::UnixTs");
+        assert_eq!(ptr2path(0x0001).unwrap().to_rust_foreign_path(), "zeon::std::codegen::prim::UnixTs");
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
-        assert_eq!(DEFTYPES.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
+        assert_eq!(deftypes.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }
 }

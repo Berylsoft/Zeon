@@ -1,10 +1,9 @@
 pub fn shake256<const N: usize>(bytes: &[u8]) -> [u8; N] {
-    use sha3::{Shake256, digest::{Update, ExtendableOutput, XofReader}};
-    let mut hasher = Shake256::default();
+    use tiny_keccak::{Shake, Hasher};
+    let mut hasher = Shake::v256();
     hasher.update(bytes);
-    let mut reader = hasher.finalize_xof();
     let mut res = [0u8; N];
-    reader.read(&mut res);
+    hasher.finalize(&mut res);
     res
 }
 
@@ -52,11 +51,22 @@ pub const fn u64_to_typehash(n: u64) -> [u8; 7] {
 }
 
 pub fn to_snake_case(path: &str) -> String {
-    use convert_case::{Case, Casing};
-    path.to_case(Case::Snake)
+    path.replace('-', "_")
 }
 
+// Copied from serde: serde_derive/src/internals/case.rs
 pub fn to_pascal_case(name: &str) -> String {
-    use convert_case::{Case, Casing};
-    name.to_case(Case::Pascal)
+    let mut pascal = String::new();
+    let mut capitalize = true;
+    for ch in name.chars() {
+        if ch == '-' {
+            capitalize = true;
+        } else if capitalize {
+            pascal.push(ch.to_ascii_uppercase());
+            capitalize = false;
+        } else {
+            pascal.push(ch);
+        }
+    }
+    pascal
 }
