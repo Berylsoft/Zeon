@@ -13,6 +13,8 @@ path = "main.rs"
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
+syn = { version = "1", features = ["full"] }
+prettyplease = "*"
 hex = "*"
 indexmap = "*"
 macros = { git = "https://github.com/Berylsoft/rust-macros" }

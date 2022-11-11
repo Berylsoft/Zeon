@@ -312,7 +312,7 @@ fn derive_file() -> TokenStream {
         let out = derive_def(ptr, dt);
         map.get_mut(&path).unwrap().push(out);
     }
-    let mut file = quote!(#![allow(non_camel_case_types, unused_imports, clippy::unit_arg, clippy::let_unit_value)]);
+    let mut file = quote!(#![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]);
     file.extend(map.into_iter().map(|(path, outs)| {
         let path = ident(path);
         quote!(
@@ -326,10 +326,11 @@ fn derive_file() -> TokenStream {
 }
 
 fn main() {
-    use std::{fs::OpenOptions, env::args_os, io::Write, process::Command};
+    use std::{fs::OpenOptions, env::args_os, io::Write};
+    let src = syn::parse2::<syn::File>(derive_file()).unwrap();
+    let src = prettyplease::unparse(&src);
     let path = args_os().nth(1).unwrap();
     let mut f = OpenOptions::new().write(true).truncate(true).open(&path).unwrap();
     f.write_all(b"// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.\n").unwrap();
-    f.write_all(derive_file().to_string().as_bytes()).unwrap();
-    assert!(Command::new("rustfmt").arg(&path).status().unwrap().success());
+    f.write_all(src.as_bytes()).unwrap();
 }

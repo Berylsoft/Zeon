@@ -1,12 +1,7 @@
 // This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.
-#![allow(
-    non_camel_case_types,
-    unused_imports,
-    clippy::unit_arg,
-    clippy::let_unit_value
-)]
+#![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]
 pub mod types {
-    use crate::{meta::ObjectRef, types::*};
+    use crate::{types::*, meta::ObjectRef};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Deftype {
         Alias(Type),
@@ -23,39 +18,53 @@ pub mod types {
                     Self::Enum(_) => 1u8,
                     Self::Struct(_) => 2u8,
                 },
-                Box::new(match self {
-                    Self::Alias(val) => Value::Type(val),
-                    Self::Enum(val) => Value::Map(
-                        (Type::String, Type::Type),
-                        val.into_iter()
-                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
-                            .collect(),
-                    ),
-                    Self::Struct(val) => Value::Map(
-                        (Type::String, Type::Type),
-                        val.into_iter()
-                            .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
-                            .collect(),
-                    ),
-                }),
+                Box::new(
+                    match self {
+                        Self::Alias(val) => Value::Type(val),
+                        Self::Enum(val) => {
+                            Value::Map(
+                                (Type::String, Type::Type),
+                                val
+                                    .into_iter()
+                                    .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
+                                    .collect(),
+                            )
+                        }
+                        Self::Struct(val) => {
+                            Value::Map(
+                                (Type::String, Type::Type),
+                                val
+                                    .into_iter()
+                                    .map(|(sk, sv)| (Value::String(sk), Value::Type(sv)))
+                                    .collect(),
+                            )
+                        }
+                    },
+                ),
             )
         }
         fn deserialize(val: Value) -> Self {
             let (variant, val) = val.into_enum();
             match variant {
                 0u8 => Self::Alias(val.into_type()),
-                1u8 => Self::Enum(
-                    val.into_map()
-                        .into_iter()
-                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
-                        .collect(),
-                ),
-                2u8 => Self::Struct(
-                    val.into_map()
-                        .into_iter()
-                        .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
-                        .collect(),
-                ),
+                1u8 => {
+                    Self::Enum(
+                        val
+                            .into_map()
+                            .into_iter()
+                            .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
+                            .collect(),
+                    )
+                }
+                2u8 => {
+                    Self::Struct(
+                        val
+                            .into_map()
+                            .into_iter()
+                            .map(|(sk, sv)| (sk.into_string(), sv.into_type()))
+                            .collect(),
+                    )
+                }
                 _ => unreachable!(),
             }
         }
@@ -72,15 +81,16 @@ pub mod types {
             Value::Struct(
                 TypePtr::from_u16_unchecked(2u16),
                 vec![
-                    self.attr_type.serialize(),
-                    self.name.serialize(),
-                    Value::Type(self.val_type),
+                    self.attr_type.serialize(), self.name.serialize(), Value::Type(self
+                    .val_type),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [attr_type, name, val_type]: [Value; 3usize] =
-                val.into_struct().try_into().unwrap();
+            let [attr_type, name, val_type]: [Value; 3usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
             Self {
                 attr_type: attr_type.deserialize_into(),
                 name: name.deserialize_into(),
@@ -108,28 +118,30 @@ pub mod types {
                     Self::Iterset(_) => 3u8,
                     Self::Complex(_) => 4u8,
                 },
-                Box::new(match self {
-                    Self::Const(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Mut(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Iter(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Iterset(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                    Self::Complex(val) => {
-                        let _ = val;
-                        Value::Unit
-                    }
-                }),
+                Box::new(
+                    match self {
+                        Self::Const(val) => {
+                            let _ = val;
+                            Value::Unit
+                        }
+                        Self::Mut(val) => {
+                            let _ = val;
+                            Value::Unit
+                        }
+                        Self::Iter(val) => {
+                            let _ = val;
+                            Value::Unit
+                        }
+                        Self::Iterset(val) => {
+                            let _ = val;
+                            Value::Unit
+                        }
+                        Self::Complex(val) => {
+                            let _ = val;
+                            Value::Unit
+                        }
+                    },
+                ),
             )
         }
         fn deserialize(val: Value) -> Self {
@@ -155,19 +167,18 @@ pub mod types {
             Value::Struct(
                 TypePtr::from_u16_unchecked(5u16),
                 vec![
-                    Value::List(
-                        Type::Enum(TypePtr::from_u16_unchecked(2u16)),
-                        self.attrs.into_iter().map(|sv| sv.serialize()).collect(),
-                    ),
-                    Value::List(
-                        Type::Enum(TypePtr::from_u16_unchecked(7u16)),
-                        self.extends.into_iter().map(|sv| sv.serialize()).collect(),
-                    ),
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(2u16)), self.attrs
+                    .into_iter().map(| sv | sv.serialize()).collect()),
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(7u16)), self
+                    .extends.into_iter().map(| sv | sv.serialize()).collect()),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [attrs, extends]: [Value; 2usize] = val.into_struct().try_into().unwrap();
+            let [attrs, extends]: [Value; 2usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
             Self {
                 attrs: attrs
                     .into_list()
@@ -184,7 +195,7 @@ pub mod types {
     }
 }
 pub mod prim {
-    use crate::{meta::ObjectRef, types::*};
+    use crate::{types::*, meta::ObjectRef};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UnixTs(pub u64);
     impl Schema for UnixTs {
@@ -275,7 +286,7 @@ pub mod prim {
     }
 }
 pub mod pattern {
-    use crate::{meta::ObjectRef, types::*};
+    use crate::{types::*, meta::ObjectRef};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum RefsetItem {
         Remove(ObjectRef),
@@ -290,10 +301,12 @@ pub mod pattern {
                     Self::Remove(_) => 0u8,
                     Self::Add(_) => 1u8,
                 },
-                Box::new(match self {
-                    Self::Remove(val) => Value::ObjectRef(val),
-                    Self::Add(val) => Value::ObjectRef(val),
-                }),
+                Box::new(
+                    match self {
+                        Self::Remove(val) => Value::ObjectRef(val),
+                        Self::Add(val) => Value::ObjectRef(val),
+                    },
+                ),
             )
         }
         fn deserialize(val: Value) -> Self {
@@ -307,7 +320,7 @@ pub mod pattern {
     }
 }
 pub mod meta {
-    use crate::{meta::ObjectRef, types::*};
+    use crate::{types::*, meta::ObjectRef};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Typeptr {
         Std(super::meta::TypeptrStd),
@@ -322,10 +335,12 @@ pub mod meta {
                     Self::Std(_) => 0u8,
                     Self::Hash(_) => 1u8,
                 },
-                Box::new(match self {
-                    Self::Std(val) => val.serialize(),
-                    Self::Hash(val) => val.serialize(),
-                }),
+                Box::new(
+                    match self {
+                        Self::Std(val) => val.serialize(),
+                        Self::Hash(val) => val.serialize(),
+                    },
+                ),
             )
         }
         fn deserialize(val: Value) -> Self {
