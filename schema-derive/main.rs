@@ -330,7 +330,7 @@ const HEADER: &[u8] = b"// This is a generated file. Do not modify, run `cargo r
 
 fn main() {
     use std::{fs::OpenOptions, env::args_os, io::{Read, Write}};
-    let path = args_os().nth(1).unwrap_or(PATH.into());
+    let path = args_os().nth(1).unwrap_or_else(|| PATH.into());
     {
         let mut f = OpenOptions::new().read(true).open(&path).unwrap();
         let mut buf = vec![0u8; HEADER.len()];

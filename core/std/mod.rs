@@ -87,6 +87,16 @@ macro_rules! deftypes {
             })
         }
 
+        pub const fn const_path2ptr(path: Path) -> Option<u16> {
+            $(if (
+                crate::util::const_str_equal(path.path, $path) &
+                crate::util::const_str_equal(path.name, $name)
+            ) {
+                return Some($stdptr)
+            })*
+            None
+        }
+
         pub fn init_deftypes() -> BTreeMap<u16, DefType> {
             use crate::types::Type::*;
             macro_rules! list {
@@ -101,7 +111,7 @@ macro_rules! deftypes {
             }
             macro_rules! ty {
                 (:$p:literal :$n:literal) => {
-                    TypePtr::from_u16_unchecked(path2ptr(Path { path: $p, name: $n }).unwrap())
+                    TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }).unwrap())
                 };
             }
             macro_rules! alias_t {
@@ -201,6 +211,7 @@ mod test {
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_self_path(), "super::prim::UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_foreign_path(), "zeon::std::codegen::prim::UnixTs");
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
+        assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(deftypes.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }
 }
