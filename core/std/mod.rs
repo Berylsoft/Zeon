@@ -73,6 +73,7 @@ macro_rules! def_struct {
 
 macro_rules! deftypes {
     ($($stdptr:literal | std :$path:literal :$name:literal -> $deftype:expr)*) => {
+        #[deny(unreachable_patterns)] // deny duplicate ptr
         pub const fn ptr2path(stdptr: u16) -> Option<Path> {
             Some(match stdptr {
                 $($stdptr => Path { path: $path, name: $name },)*
@@ -87,14 +88,14 @@ macro_rules! deftypes {
             })
         }
 
-        pub const fn const_path2ptr(path: Path) -> Option<u16> {
+        const fn const_path2ptr(path: Path) -> u16 {
             $(if (
                 crate::util::const_str_equal(path.path, $path) &
                 crate::util::const_str_equal(path.name, $name)
             ) {
-                return Some($stdptr)
+                return $stdptr
             })*
-            None
+            unreachable!();
         }
 
         pub fn init_deftypes() -> BTreeMap<u16, DefType> {
@@ -110,9 +111,10 @@ macro_rules! deftypes {
                 };
             }
             macro_rules! ty {
-                (:$p:literal :$n:literal) => {
-                    TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }).unwrap())
-                };
+                (:$p:literal :$n:literal) => {{
+                    const TY: TypePtr = TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
+                    TY
+                }};
             }
             macro_rules! alias_t {
                 (:$p:literal :$n:literal) => {
@@ -143,7 +145,6 @@ macro_rules! deftypes {
 
 // endregion
 
-// If there is a duplicate ptr, the generated `ptr2path` will raise an `unreachable_patterns` warning
 deftypes! {
     0x0000 | std :"types" :"deftype" -> def_enum! {
         "alias"  -> Type
@@ -211,7 +212,7 @@ mod test {
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_self_path(), "super::prim::UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_foreign_path(), "zeon::std::codegen::prim::UnixTs");
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
-        assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
+        assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }), 0x0001);
         assert_eq!(deftypes.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
     }
 }
