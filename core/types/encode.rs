@@ -150,8 +150,7 @@ impl Type {
 
             Type::Alias(ptr) |
             Type::Enum(ptr) |
-            Type::Struct(ptr) |
-            Type::Trait(ptr) => {
+            Type::Struct(ptr) => {
                 typeptr!(ptr);
             },
         }

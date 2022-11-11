@@ -73,8 +73,6 @@ fn type2tokens(ty: Type) -> TokenStream {
             let ptr = ptr2tokens(ptr);
             quote!(Type::Struct(#ptr))
         },
-
-        Type::Trait(_) => unreachable!("trait type in value context"),
     }
 }
 
@@ -111,8 +109,6 @@ fn type2type(ty: Type) -> TokenStream {
         Type::Alias(ptr) |
         Type::Enum(ptr) |
         Type::Struct(ptr) => ptr2rustpath(ptr),
-
-        Type::Trait(_) => unreachable!("trait type in value context"),
     }
 }
 
@@ -152,8 +148,6 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         Type::Alias(_) |
         Type::Enum(_) |
         Type::Struct(_) => quote!(#v.deserialize_into()),
-
-        Type::Trait(_) => unreachable!("trait type in value context"),
     }
 }
 
@@ -194,8 +188,6 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::Alias(_) |
         Type::Enum(_) |
         Type::Struct(_) => quote!(#v.serialize()),
-
-        Type::Trait(_) => unreachable!("trait type in value context"),
     }
 }
 

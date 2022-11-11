@@ -187,10 +187,6 @@ impl Type {
                 let ptr = typeptr!();
                 Type::Struct(ptr)
             },
-            Tag::Trait => {
-                let ptr = typeptr!();
-                Type::Trait(ptr)
-            },
         })
     }
 
@@ -291,9 +287,6 @@ impl Value {
                 let ot = fixed_u16!();
                 let oid = fixed_u64!();
                 Value::ObjectRef(ObjectRef { ot, oid })
-            },
-            Tag::Trait => {
-                unreachable!("trait tag in value context");
             },
         })
     }

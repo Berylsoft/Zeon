@@ -73,7 +73,6 @@ impl Type {
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
             Type::ObjectRef => Tag::ObjectRef,
-            Type::Trait(_)  => Tag::Trait,
         }
     }
 }
