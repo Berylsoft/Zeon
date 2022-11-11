@@ -34,6 +34,8 @@ pub enum Tag {
 
     Type,      // 0xE
     ObjectRef, // 0xF
+
+    Trait,     // 0x10 TYPE ONLY
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -58,6 +60,8 @@ pub enum Type {
 
     Type,
     ObjectRef,
+
+    Trait(TypePtr),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
