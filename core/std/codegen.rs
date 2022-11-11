@@ -1,4 +1,4 @@
-// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.
+// This is a generated file. Do not modify, run `cargo run --bin schema-derive` to update.
 #![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]
 pub mod types {
     use crate::{types::*, meta::ObjectRef};

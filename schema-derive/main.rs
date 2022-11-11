@@ -325,12 +325,25 @@ fn derive_file() -> TokenStream {
     file
 }
 
+const PATH: &str = "core/std/codegen.rs";
+const HEADER: &[u8] = b"// This is a generated file. Do not modify, run `cargo run --bin schema-derive` to update.\n";
+
 fn main() {
-    use std::{fs::OpenOptions, env::args_os, io::Write};
-    let src = syn::parse2::<syn::File>(derive_file()).unwrap();
-    let src = prettyplease::unparse(&src);
-    let path = args_os().nth(1).unwrap();
-    let mut f = OpenOptions::new().write(true).truncate(true).open(&path).unwrap();
-    f.write_all(b"// This is a generated file. Do not modify, run `cargo run --bin schema-derive -- core/std/codegen.rs` to update.\n").unwrap();
-    f.write_all(src.as_bytes()).unwrap();
+    use std::{fs::OpenOptions, env::args_os, io::{Read, Write}};
+    let path = args_os().nth(1).unwrap_or(PATH.into());
+    {
+        let mut f = OpenOptions::new().read(true).open(&path).unwrap();
+        let mut buf = vec![0u8; HEADER.len()];
+        f.read_exact(&mut buf).unwrap();
+        if buf != HEADER {
+            panic!("overwrite protected");
+        }
+    }
+    {
+        let src = syn::parse2::<syn::File>(derive_file()).unwrap();
+        let src = prettyplease::unparse(&src);
+        let mut f = OpenOptions::new().write(true).truncate(true).open(&path).unwrap();
+        f.write_all(HEADER).unwrap();
+        f.write_all(src.as_bytes()).unwrap();
+    }
 }
