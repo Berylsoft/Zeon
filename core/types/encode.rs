@@ -1,126 +1,61 @@
-#![allow(unused_macros)]
-
 use super::*;
 
-macro_rules! encode_macros {
-    ($self:expr, $buf:expr) => {
-        let self_tag = $self.as_tag();
-        macro_rules! conv_tag {
-            ($tag:expr) => {
-                $tag as u8
-            };
-        }
-        macro_rules! u8 {
-            ($c:expr) => {
-                $buf.push($c)
-            };
-        }
-        macro_rules! bytes {
-            ($s:expr) => {
-                $buf.extend_from_slice($s)
-            };
-        }
-        macro_rules! fixed {
-            ($n:expr) => {
-                $buf.extend_from_slice($n.to_be_bytes().as_slice())
-            };
-        }
-        macro_rules! tag {
-            () => {
-                u8!(conv_tag!(self_tag))
-            };
-        }
-        macro_rules! tag_with_u4 {
-            ($u4:expr) => {
-                u8!(crate::util::from_h4l4(conv_tag!(self_tag), $u4))
-            };
-        }
-        macro_rules! tag_with_noop {
-            () => {
-                tag_with_u4!(0)
-            };
-        }
-        macro_rules! tag_with_bool {
-            ($bool:expr) => {
-                tag_with_u4!($bool as u8)
-            };
-        }
-        macro_rules! tag_with_uvar {
-            ($uvar:expr) => {
-                if $uvar < L4_EXT_U8 as u64 {
-                    tag_with_u4!($uvar as u8);
-                } else if $uvar <= u8::MAX as u64 {
-                    tag_with_u4!(L4_EXT_U8);
-                    fixed!($uvar as u8);
-                } else if $uvar <= u16::MAX as u64 {
-                    tag_with_u4!(L4_EXT_U16);
-                    fixed!($uvar as u16);
-                } else if $uvar <= u32::MAX as u64 {
-                    tag_with_u4!(L4_EXT_U32);
-                    fixed!($uvar as u32);
-                } else {
-                    tag_with_u4!(L4_EXT_U64);
-                    fixed!($uvar);
-                }
-            };
-        }
-        macro_rules! tag_with_ivar {
-            ($ivar:expr) => {
-                tag_with_uvar!(crate::util::zigzag_encode($ivar))
-            };
-        }
-        macro_rules! tag_with_szvar {
-            ($szvar:expr) => {{
-                let uvar: u64 = $szvar.try_into().unwrap();
-                tag_with_uvar!(uvar)
-            }};
-        }
-        macro_rules! typeptr {
-            ($ptr:expr) => {
-                match $ptr {
-                    TypePtr::Std(stdptr) => {
-                        fixed!(stdptr.to_u16());
-                    },
-                    TypePtr::Hash(hash) => {
-                        u8!(0xFF);
-                        bytes!(hash.as_ref())
-                    }
-                }
-            };
-        }
-        macro_rules! comptype {
-            ($v:expr) => {
-                $v.encode_to($buf)
-            };
-        }
-        macro_rules! value {
-            ($v:expr) => {
-                $v.encode_to($buf)
-            };
-        }
-        macro_rules! seq {
-            ($s:expr) => {
-                for v in $s {
-                    value!(v);
-                }
-            };
-        }
-        macro_rules! seq_map {
-            ($s:expr) => {
-                for (k, v) in $s {
-                    value!(k);
-                    value!(v);
-                }
-            };
-        }
-    };
+struct Writer {
+    bytes: Vec<u8>,
 }
 
-impl Type {
-    pub fn encode_to(&self, buf: &mut Vec<u8>) {
-        encode_macros!(self, buf);
-        tag!();
-        match self {
+impl Writer {
+    fn new() -> Writer {
+        Writer { bytes: Vec::new() }
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        let Writer { bytes } = self;
+        bytes
+    }
+
+    #[inline]
+    fn bytes<B: AsRef<[u8]>>(&mut self, bytes: B) {
+        self.bytes.extend_from_slice(bytes.as_ref());
+    }
+
+    // #[inline]
+    // fn bytes_sized<const N: usize>(&mut self, bytes: [u8; N]) {
+    //     self.bytes.extend_from_slice(bytes.as_slice());
+    // }
+
+    #[inline]
+    fn u8(&mut self, n: u8) {
+        self.bytes.push(n);
+    }
+
+    fn u16(&mut self, n: u16) {
+        self.bytes(n.to_be_bytes());
+    }
+
+    fn u32(&mut self, n: u32) {
+        self.bytes(n.to_be_bytes());
+    }
+
+    fn u64(&mut self, n: u64) {
+        self.bytes(n.to_be_bytes());
+    }
+
+    fn typeptr(&mut self, ptr: &TypePtr) {
+        match ptr {
+            TypePtr::Std(stdptr) => {
+                self.u16(stdptr.to_u16());
+            },
+            TypePtr::Hash(hash) => {
+                self.u8(0xFF);
+                self.bytes(hash);
+            }
+        }
+    }
+
+    fn ty(&mut self, t: &Type) {
+        self.u8(t.as_tag() as u8);
+        match t {
             Type::Unit |
             Type::Bool |
             Type::Int |
@@ -129,136 +64,199 @@ impl Type {
             Type::String |
             Type::Bytes |
             Type::Type |
-            Type::ObjectRef => {
-            },
+            Type::TypePtr |
+            Type::ObjectRef => {},
 
             Type::Option(t) |
             Type::List(t) => {
-                comptype!(t)
+                self.ty(t);
+
             },
             Type::Map(tk, tv) => {
-                comptype!(tk);
-                comptype!(tv);
+                self.ty(tk);
+                self.ty(tv);
+
             },
 
             Type::Tuple(s) => {
-                fixed!(s.len() as u8);
+                self.u8(s.len() as u8);
+
                 for t in s {
-                    comptype!(t);
+                    self.ty(t);
                 }
+
             }
 
             Type::Alias(ptr) |
             Type::Enum(ptr) |
             Type::Struct(ptr) => {
-                typeptr!(ptr);
+                self.typeptr(ptr);
+
             },
         }
     }
 
-    pub fn encode(self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.encode_to(&mut buf);
-        buf
+    #[inline]
+    fn with_l4(&mut self, htag: HTag, l: u8) {
+        self.u8(crate::util::from_h4l4(htag as u8, l));
     }
-}
 
-impl Value {
-    pub fn encode_to(self, buf: &mut Vec<u8>) {
-        encode_macros!(self, buf);
-        match self {
+    fn with_ltag(&mut self, htag: HTag, l: LTag) {
+        self.with_l4(htag, l as u8)
+    }
+
+    fn with_uvar(&mut self, htag: HTag, u: u64) {
+        if u < EXT8 as u64 {
+            self.with_l4(htag, u as u8);
+        } else if u <= (u8::MAX as u64) {
+            self.with_l4(htag, EXT8);
+            self.u8(u as u8);
+        } else if u <= (u16::MAX as u64) {
+            self.with_l4(htag, EXT16);
+            self.u16(u as u16);
+        } else if u <= (u32::MAX as u64) {
+            self.with_l4(htag, EXT32);
+            self.u32(u as u32);
+        } else {
+            self.with_l4(htag, EXT64);
+            self.u64(u);
+        }
+    }
+
+    fn with_ivar(&mut self, htag: HTag, i: i64) {
+        self.with_uvar(htag, crate::util::zigzag_encode(i))
+    }
+
+    fn with_szvar(&mut self, htag: HTag, sz: usize) {
+        self.with_uvar(htag, sz.try_into().unwrap())
+    }
+
+    fn val_seq(&mut self, s: &Vec<Value>) {
+
+        for v in s {
+            self.val(v);
+        }
+
+    }
+
+    fn val_seq_map(&mut self, s: &Vec<(Value, Value)>) {
+
+        for (k, v) in s {
+            self.val(k);
+            self.val(v);
+        }
+
+    }
+
+    fn val(&mut self, val: &Value) {
+        let htag = val.as_htag();
+        match val {
             Value::Unit => {
-                tag_with_noop!();
+                self.with_ltag(htag, LTag::Unit);
 
             },
             Value::Bool(b) => {
-                tag_with_bool!(b);
+                if *b {
+                    self.with_ltag(htag, LTag::True);
+                } else {
+                    self.with_ltag(htag, LTag::False);
+                }
 
             },
             Value::Int(i) => {
-                tag_with_ivar!(i);
+                self.with_ivar(htag, *i);
 
             },
             Value::UInt(u) => {
-                tag_with_uvar!(u);
+                self.with_uvar(htag, *u);
 
             },
             Value::Float(f) => {
-                tag_with_noop!();
-                fixed!(f);
+                self.with_l4(htag, 0);
+                self.u64(*f);
 
             },
             Value::String(b) => {
-                tag_with_szvar!(b.len());
-                bytes!(b.as_bytes());
+                self.with_szvar(htag, b.len());
+                self.bytes(b);
 
             },
             Value::Bytes(b) => {
-                tag_with_szvar!(b.len());
-                bytes!(b.as_slice());
+                self.with_szvar(htag, b.len());
+                self.bytes(b);
 
             },
             Value::Option(t, opt) => {
-                tag_with_bool!(opt.is_some());
-                comptype!(t);
-                if let Some(v) = *opt {
-                    value!(v);
+                if let Some(v) = opt.as_ref() {
+                    self.with_ltag(htag, LTag::Some);
+                    self.ty(t);
+                    self.val(v);
+                } else {
+                    self.with_ltag(htag, LTag::None);
+                    self.ty(t);
                 }
 
             },
             Value::List(t, s) => {
-                tag_with_szvar!(s.len());
-                comptype!(t);
-                seq!(s);
+                self.with_szvar(htag, s.len());
+                self.ty(t);
+                self.val_seq(s);
 
             },
             Value::Map((tk, tv), s) => {
-                tag_with_szvar!(s.len());
-                comptype!(tk);
-                comptype!(tv);
-                seq_map!(s);
+                self.with_szvar(htag, s.len());
+                self.ty(tk);
+                self.ty(tv);
+                self.val_seq_map(s);
 
             },
             Value::Tuple(s) => {
-                tag_with_szvar!(s.len());
-                seq!(s);
+                self.with_szvar(htag, s.len());
+                self.val_seq(s);
 
             },
             Value::Alias(ptr, v) => {
-                tag_with_noop!();
-                typeptr!(ptr);
-                value!(v);
+                self.with_ltag(htag, LTag::Alias);
+                self.typeptr(ptr);
+                self.val(v);
 
             },
             Value::Enum(ptr, ev, v) => {
-                tag_with_uvar!(ev as u64);
-                typeptr!(ptr);
-                value!(v);
+                self.with_uvar(htag, *ev as u64);
+                self.typeptr(ptr);
+                self.val(v);
 
             },
             Value::Struct(ptr, s) => {
-                tag_with_szvar!(s.len());
-                typeptr!(ptr);
-                seq!(s);
+                self.with_szvar(htag, s.len());
+                self.typeptr(ptr);
+                self.val_seq(s);
                 
             },
             Value::Type(t) => {
-                tag_with_noop!();
-                comptype!(t);
+                self.with_ltag(htag, LTag::Type);
+                self.ty(t);
+
+            }
+            Value::TypePtr(ptr) => {
+                self.with_ltag(htag, LTag::TypePtr);
+                self.typeptr(ptr);
 
             }
             Value::ObjectRef(ObjectRef { ot, oid }) => {
-                tag_with_noop!();
-                fixed!(ot);
-                fixed!(oid);
+                self.with_ltag(htag, LTag::ObjectRef);
+                self.u16(*ot);
+                self.u64(*oid);
 
             }
         }
     }
+}
 
-    pub fn encode(self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.encode_to(&mut buf);
-        buf
+impl Value {
+    pub fn encode(&self) -> Vec<u8> {
+        let mut writer = Writer::new();
+        writer.val(self);
+        writer.into_bytes()
     }
 }

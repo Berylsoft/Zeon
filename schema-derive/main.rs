@@ -41,6 +41,7 @@ fn type2tokens(ty: Type) -> TokenStream {
         Type::String => quote!(Type::String),
         Type::Bytes => quote!(Type::Bytes),
         Type::Type => quote!(Type::Type),
+        Type::TypePtr => quote!(Type::TypePtr),
         Type::ObjectRef => quote!(Type::ObjectRef),
 
         Type::Option(sty) => {
@@ -86,6 +87,7 @@ fn type2type(ty: Type) -> TokenStream {
         Type::String => quote!(String),
         Type::Bytes => quote!(Vec<u8>),
         Type::Type => quote!(Type),
+        Type::TypePtr => quote!(TypePtr),
         Type::ObjectRef => quote!(ObjectRef),
 
         Type::Option(sty) => {
@@ -122,6 +124,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         Type::String => quote!(#v.into_string()),
         Type::Bytes => quote!(#v.into_bytes()),
         Type::Type => quote!(#v.into_type()),
+        Type::TypePtr => quote!(#v.into_typeptr()),
         Type::ObjectRef => quote!(#v.into_objectref()),
 
         Type::Option(sty) => {
@@ -161,6 +164,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::String => quote!(Value::String(#v)),
         Type::Bytes => quote!(Value::Bytes(#v)),
         Type::Type => quote!(Value::Type(#v)),
+        Type::TypePtr => quote!(Value::TypePtr(#v)),
         Type::ObjectRef => quote!(Value::ObjectRef(#v)),
 
         Type::Option(sty) => {

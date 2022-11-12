@@ -72,6 +72,7 @@ impl Type {
             Type::Enum(_)   => Tag::Enum,
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
+            Type::TypePtr   => Tag::TypePtr,
             Type::ObjectRef => Tag::ObjectRef,
         }
     }
@@ -95,7 +96,31 @@ impl Value {
             Value::Enum(_, _, _) => Tag::Enum,
             Value::Struct(_, _)  => Tag::Struct,
             Value::Type(_)       => Tag::Type,
+            Value::TypePtr(_)    => Tag::TypePtr,
             Value::ObjectRef(_)  => Tag::ObjectRef,
+        }
+    }
+
+    pub const fn as_htag(&self) -> HTag {
+        match self {
+            Value::Int(_)        => HTag::Int,
+            Value::UInt(_)       => HTag::UInt,
+            Value::Float(_)      => HTag::Float,
+            Value::String(_)     => HTag::String,
+            Value::Bytes(_)      => HTag::Bytes,
+            Value::List(_, _)    => HTag::List,
+            Value::Map(_, _)     => HTag::Map,
+            Value::Tuple(_)      => HTag::Tuple,
+            Value::Enum(_, _, _) => HTag::Enum,
+            Value::Struct(_, _)  => HTag::Struct,
+
+            Value::Type(_)       |
+            Value::TypePtr(_)    |
+            Value::ObjectRef(_)  |
+            Value::Unit          |
+            Value::Bool(_)       |
+            Value::Option(_, _)  |
+            Value::Alias(_, _)   => HTag::L4,
         }
     }
 
@@ -116,6 +141,7 @@ impl Value {
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
+            Value::TypePtr(_) => Type::TypePtr,
             Value::ObjectRef(_) => Type::ObjectRef,
         }
     }
@@ -238,6 +264,13 @@ impl Value {
 
     pub fn into_type(self) -> Type {
         if let Value::Type(v) = self {
+            return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_typeptr(self) -> TypePtr {
+        if let Value::TypePtr(v) = self {
             return v;
         }
         unreachable!()

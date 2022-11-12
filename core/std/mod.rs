@@ -112,7 +112,7 @@ macro_rules! deftypes {
             }
             macro_rules! ty {
                 (:$p:literal :$n:literal) => {{
-                    const TY: TypePtr = TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
+                    const TY: crate::types::TypePtr = crate::types::TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
                     TY
                 }};
             }

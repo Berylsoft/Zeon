@@ -14,26 +14,53 @@ pub type EnumVariant = u8;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
 pub enum Tag {
-    Unit       = 0x0,
-    Bool,      // 0x1
-    Int,       // 0x2
-    UInt,      // 0x3
-    Float,     // 0x4
-    String,    // 0x5
-    Bytes,     // 0x6
+    Unit        = 0x00,
+    Bool,      // 0x01
+    Int,       // 0x02
+    UInt,      // 0x03
+    Float,     // 0x04
+    String,    // 0x05
+    Bytes,     // 0x06
+    Option,    // 0x07
+    List,      // 0x08
+    Map,       // 0x09
+    Tuple,     // 0x0A
+    Alias,     // 0x0B
+    Enum,      // 0x0C
+    Struct,    // 0x0D
+    Type,      // 0x0E
+    TypePtr,   // 0x0F
+    ObjectRef, // 0x10
+}
 
-    Option,    // 0x7
-    List,      // 0x8
-    Map,       // 0x9
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
+pub enum HTag {
+    L4          = 0x0,
+    Int,       // 0x1
+    UInt,      // 0x2
+    Float,     // 0x3
+    String,    // 0x4
+    Bytes,     // 0x5
+    List,      // 0x6
+    Map,       // 0x7
+    Tuple,     // 0x8
+    Enum,      // 0x9
+    Struct,    // 0xA
+}
 
-    Tuple,     // 0xA
-
-    Alias,     // 0xB
-    Enum,      // 0xC
-    Struct,    // 0xD
-
-    Type,      // 0xE
-    ObjectRef, // 0xF
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
+pub enum LTag {
+    Unit        = 0x0,
+    False,     // 0x1
+    True,      // 0x2
+    None,      // 0x3
+    Some,      // 0x4
+    Alias,     // 0x5
+    Type,      // 0x6
+    TypePtr,   // 0x7
+    ObjectRef, // 0x8
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -57,6 +84,7 @@ pub enum Type {
     Struct(TypePtr),
 
     Type,
+    TypePtr,
     ObjectRef,
 }
 
@@ -81,15 +109,16 @@ pub enum Value {
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),
+    TypePtr(TypePtr),
     ObjectRef(ObjectRef),
 }
 
 mod casting;
 
-pub(self) const L4_EXT_U8: u8 = 0xC;
-pub(self) const L4_EXT_U16: u8 = 0xD;
-pub(self) const L4_EXT_U32: u8 = 0xE;
-pub(self) const L4_EXT_U64: u8 = 0xF;
+pub(self) const EXT8: u8 = 0xC;
+pub(self) const EXT16: u8 = 0xD;
+pub(self) const EXT32: u8 = 0xE;
+pub(self) const EXT64: u8 = 0xF;
 
 macros::error_enum! {
     #[derive(Debug)]
@@ -98,8 +127,12 @@ macros::error_enum! {
         Utf8 => std::string::FromUtf8Error,
         Size => std::num::TryFromIntError,
         Tag => num_enum::TryFromPrimitiveError<Tag>,
+        HTag => num_enum::TryFromPrimitiveError<HTag>,
+        LTag => num_enum::TryFromPrimitiveError<LTag>,
     }
 }
+
+pub type DecodeResult<T> = Result<T, DecodeError>;
 
 mod encode;
 mod decode;

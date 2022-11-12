@@ -1,145 +1,64 @@
-#![allow(unused_macros)]
-
 use super::*;
 use std::io::{Read, Cursor};
 
-macro_rules! decode_macros {
-    ($buf:expr) => {
-        macro_rules! conv_tag {
-            ($u8:expr) => {{
-                let tag: Tag = $u8.try_into()?;
-                tag
-            }};
-        }
-        macro_rules! u8 {
-            () => {{
-                let [b] = sized_bytes!(1);
-                b
-            }};
-        }
-        macro_rules! bytes {
-            ($size:expr) => {{
-                let mut _buf = vec![0u8; $size];
-                $buf.read_exact(&mut _buf)?;
-                _buf
-            }};
-        }
-        macro_rules! sized_bytes {
-            ($len:expr) => {{
-                let mut _buf = [0u8; $len];
-                $buf.read_exact(&mut _buf)?;
-                _buf
-            }};
-        }
-        macro_rules! fixed_u16 {
-            () => {
-                u16::from_be_bytes(sized_bytes!(2))
-            };
-        }
-        macro_rules! fixed_u32 {
-            () => {
-                u32::from_be_bytes(sized_bytes!(4))
-            };
-        }
-        macro_rules! fixed_u64 {
-            () => {
-                u64::from_be_bytes(sized_bytes!(8))
-            };
-        }
-        macro_rules! tag {
-            () => {
-                conv_tag!(u8!())
-            };
-        }
-        macro_rules! tag_with_noop {
-            ($l4:expr) => {
-                assert_eq!($l4, 0)
-            };
-        }
-        macro_rules! tag_with_bool {
-            ($l4:expr) => {
-                match $l4 {
-                    0 => false,
-                    1 => true,
-                    _ => unreachable!(),
-                }
-            };
-        }
-        macro_rules! tag_with_uvar {
-            ($l4:expr) => {
-                match $l4 {
-                    L4_EXT_U8 => u8!() as u64,
-                    L4_EXT_U16 => fixed_u16!() as u64,
-                    L4_EXT_U32 => fixed_u32!() as u64,
-                    L4_EXT_U64 => fixed_u64!(),
-                    s => s as u64,
-                }
-            };
-        }
-        macro_rules! tag_with_ivar {
-            ($l4:expr) => {
-                crate::util::zigzag_decode(tag_with_uvar!($l4))
-            };
-        }
-        macro_rules! tag_with_szvar {
-            ($l4:expr) => {{
-                let size: usize = tag_with_uvar!($l4).try_into()?;
-                size
-            }};
-        }
-        macro_rules! typeptr {
-            () => {{
-                let h8 = u8!();
-                match h8 {
-                    0xFF => {
-                        let hash = sized_bytes!(7);
-                        TypePtr::Hash(hash)
-                    },
-                    h8 => {
-                        let l8 = u8!();
-                        TypePtr::from_u16_unchecked(u16::from_be_bytes([h8, l8]))
-                    },
-                }
-            }};
-        }
-        macro_rules! comptype {
-            () => {
-                Type::decode_from($buf)?
-            };
-        }
-        macro_rules! value {
-            () => {
-                Value::decode_from($buf)?
-            };
-        }
-        macro_rules! seq {
-            ($size:expr) => {{
-                let mut s = Vec::with_capacity($size);
-                for _ in 0..$size {
-                    let v = value!();
-                    s.push(v)
-                }
-                s
-            }};
-        }
-        macro_rules! seq_map {
-            ($size:expr) => {{
-                let mut s = Vec::with_capacity($size);
-                for _ in 0..$size {
-                    let k = value!();
-                    let v = value!();
-                    s.push((k, v))
-                }
-                s
-            }};
-        }
-    };
+type Result<T> = DecodeResult<T>;
+
+struct Reader<'a> {
+    bytes: Cursor<&'a [u8]>,
 }
 
-impl Type {
-    pub fn decode_from(buf: &mut Cursor<&[u8]>) -> Result<Type, DecodeError> {
-        decode_macros!(buf);
-        let tag = tag!();
+impl<'a> Reader<'a> {
+    fn new(buf: &'a [u8]) -> Reader<'a> {
+        Reader { bytes: Cursor::new(buf) }
+    }
+
+    #[inline]
+    fn bytes(&mut self, sz: usize) -> Result<Vec<u8>> {
+        let mut buf = vec![0u8; sz];
+        self.bytes.read_exact(&mut buf)?;
+        Ok(buf)
+    }
+
+    #[inline]
+    fn bytes_sized<const N: usize>(&mut self) -> Result<[u8; N]> {
+        let mut buf = [0u8; N];
+        self.bytes.read_exact(&mut buf)?;
+        Ok(buf)
+    }
+
+    fn u8(&mut self) -> Result<u8> {
+        let [b] = self.bytes_sized()?;
+        Ok(b)
+    }
+
+    fn u16(&mut self) -> Result<u16> {
+        Ok(u16::from_be_bytes(self.bytes_sized()?))
+    }
+
+    fn u32(&mut self) -> Result<u32> {
+        Ok(u32::from_be_bytes(self.bytes_sized()?))
+    }
+
+    fn u64(&mut self) -> Result<u64> {
+        Ok(u64::from_be_bytes(self.bytes_sized()?))
+    }
+
+    fn typeptr(&mut self) -> Result<TypePtr> {
+        let h8 = self.u8()?;
+        Ok(match h8 {
+            0xFF => {
+                let hash = self.bytes_sized()?;
+                TypePtr::Hash(hash)
+            },
+            h8 => {
+                let l8 = self.u8()?;
+                TypePtr::from_u16_unchecked(u16::from_be_bytes([h8, l8]))
+            },
+        })
+    }
+
+    fn ty(&mut self) -> Result<Type> {
+        let tag = self.u8()?.try_into()?;
         Ok(match tag {
             Tag::Unit => Type::Unit,
             Tag::Bool => Type::Bool,
@@ -149,150 +68,190 @@ impl Type {
             Tag::String => Type::String,
             Tag::Bytes => Type::Bytes,
             Tag::Type => Type::Type,
+            Tag::TypePtr => Type::TypePtr,
             Tag::ObjectRef => Type::ObjectRef,
 
             Tag::Option => {
-                let t = comptype!();
+                let t = self.ty()?;
                 Type::Option(Box::new(t))
             },
             Tag::List => {
-                let t = comptype!();
+                let t = self.ty()?;
                 Type::List(Box::new(t))
             },
             Tag::Map => {
-                let tk = comptype!();
-                let tv = comptype!();
+                let tk = self.ty()?;
+                let tv = self.ty()?;
                 Type::Map(Box::new(tk), Box::new(tv))
             },
 
             Tag::Tuple => {
-                let len = u8!() as usize;
+                let len = self.u8()? as usize;
                 let mut s = Vec::with_capacity(len);
                 for _ in 0..len {
-                    let t = comptype!();
+                    let t = self.ty()?;
                     s.push(t)
                 }
                 Type::Tuple(s)
             },
 
             Tag::Alias => {
-                let ptr = typeptr!();
+                let ptr = self.typeptr()?;
                 Type::Alias(ptr)
             },
             Tag::Enum => {
-                let ptr = typeptr!();
+                let ptr = self.typeptr()?;
                 Type::Enum(ptr)
             },
             Tag::Struct => {
-                let ptr = typeptr!();
+                let ptr = self.typeptr()?;
                 Type::Struct(ptr)
             },
         })
     }
 
-    pub fn decode(buf: &[u8]) -> Result<Type, DecodeError> {
-        let mut cur = Cursor::new(buf);
-        Type::decode_from(&mut cur)
+    fn with_ltag(&mut self, l4: u8) -> Result<LTag> {
+        Ok(l4.try_into()?)
+    }
+
+    fn with_uvar(&mut self, l4: u8) -> Result<u64> {
+        Ok(match l4 {
+            EXT8 => self.u8()? as u64,
+            EXT16 => self.u16()? as u64,
+            EXT32 => self.u32()? as u64,
+            EXT64 => self.u64()?,
+            s => s as u64,
+        })
+    }
+
+    fn with_ivar(&mut self, l4: u8) -> Result<i64> {
+        Ok(crate::util::zigzag_decode(self.with_uvar(l4)?))
+    }
+
+    fn with_szvar(&mut self, l4: u8) -> Result<usize> {
+        Ok(self.with_uvar(l4)?.try_into()?)
+    }
+
+    fn with_fvar(&mut self, _l4: u8) -> Result<u64> {
+        self.u64()
+    }
+
+    fn val_seq(&mut self, size: usize) -> Result<Vec<Value>> {
+        let mut s = Vec::with_capacity(size);
+        for _ in 0..size {
+            let v = self.val()?;
+            s.push(v)
+        }
+        Ok(s)
+    }
+
+    fn val_seq_map(&mut self, size: usize) -> Result<Vec<(Value, Value)>> {
+        let mut s = Vec::with_capacity(size);
+        for _ in 0..size {
+            let k = self.val()?;
+            let v = self.val()?;
+            s.push((k, v))
+        }
+        Ok(s)
+    }
+
+    fn val(&mut self) -> Result<Value> {
+        let (htag, l4) = crate::util::to_h4l4(self.u8()?);
+        Ok(match htag.try_into()? {
+            HTag::L4 => {
+                let ltag = self.with_ltag(l4)?;
+                match ltag {
+                    LTag::Unit => Value::Unit,
+                    LTag::True => Value::Bool(true),
+                    LTag::False => Value::Bool(false),
+                    LTag::None | LTag::Some => {
+                        let t = self.ty()?;
+                        let opt = match ltag {
+                            LTag::Some => Some(self.val()?),
+                            LTag::None => None,
+                            _ => unreachable!(),
+                        };
+                        Value::Option(t, Box::new(opt))
+                    },
+                    LTag::Alias => {
+                        let ptr = self.typeptr()?;
+                        let v = self.val()?;
+                        Value::Alias(ptr, Box::new(v))
+                    },
+                    LTag::Type => {
+                        let t = self.ty()?;
+                        Value::Type(t)
+                    },
+                    LTag::TypePtr => {
+                        let ptr = self.typeptr()?;
+                        Value::TypePtr(ptr)
+                    },
+                    LTag::ObjectRef => {
+                        let ot = self.u16()?;
+                        let oid = self.u64()?;
+                        Value::ObjectRef(ObjectRef { ot, oid })
+                    },
+                }
+            },
+            HTag::Int => {
+                let i = self.with_ivar(l4)?;
+                Value::Int(i)
+            },
+            HTag::UInt => {
+                let u = self.with_uvar(l4)?;
+                Value::UInt(u)
+            },
+            HTag::Float => {
+                let f = self.with_fvar(l4)?;
+                Value::Float(f)
+            },
+            HTag::String => {
+                let len = self.with_szvar(l4)?;
+                let b = self.bytes(len)?;
+                Value::String(String::from_utf8(b)?)
+            },
+            HTag::Bytes => {
+                let len = self.with_szvar(l4)?;
+                let b = self.bytes(len)?;
+                Value::Bytes(b)
+            },
+            HTag::List => {
+                let len = self.with_szvar(l4)?;
+                let t = self.ty()?;
+                let s = self.val_seq(len)?;
+                Value::List(t, s)
+            },
+            HTag::Map => {
+                let len = self.with_szvar(l4)?;
+                let tk = self.ty()?;
+                let tv = self.ty()?;
+                let s = self.val_seq_map(len)?;
+                Value::Map((tk, tv), s)
+            },
+            HTag::Tuple => {
+                let len = self.with_szvar(l4)?;
+                let s = self.val_seq(len)?;
+                Value::Tuple(s)
+            },
+            HTag::Enum => {
+                let ev = self.with_uvar(l4)? as u8;
+                let ptr = self.typeptr()?;
+                let v = self.val()?;
+                Value::Enum(ptr, ev, Box::new(v))
+            },
+            HTag::Struct => {
+                let len = self.with_szvar(l4)?;
+                let ptr = self.typeptr()?;
+                let s = self.val_seq(len)?;
+                Value::Struct(ptr, s)
+            },
+        })
     }
 }
 
 impl Value {
-    pub fn decode_from(buf: &mut Cursor<&[u8]>) -> Result<Value, DecodeError> {
-        decode_macros!(buf);
-        let (tag, l4) = crate::util::to_h4l4(u8!());
-        let tag: Tag = conv_tag!(tag);
-        Ok(match tag {
-            Tag::Unit => {
-                tag_with_noop!(l4);
-                Value::Unit
-            },
-            Tag::Bool => {
-                let b = tag_with_bool!(l4);
-                Value::Bool(b)
-            },
-            Tag::Int => {
-                let i = tag_with_ivar!(l4);
-                Value::Int(i)
-            },
-            Tag::UInt => {
-                let u = tag_with_uvar!(l4);
-                Value::UInt(u)
-            },
-            Tag::Float => {
-                tag_with_noop!(l4);
-                let f = fixed_u64!();
-                Value::Float(f)
-            },
-            Tag::String => {
-                let len = tag_with_szvar!(l4);
-                let b = bytes!(len);
-                Value::String(String::from_utf8(b)?)
-            },
-            Tag::Bytes => {
-                let len = tag_with_szvar!(l4);
-                let b = bytes!(len);
-                Value::Bytes(b)
-            },
-            Tag::Option => {
-                let b = tag_with_bool!(l4);
-                let t = comptype!();
-                let opt = if b {
-                    Some(value!())
-                } else { None };
-                Value::Option(t, Box::new(opt))
-            },
-            Tag::List => {
-                let len = tag_with_szvar!(l4);
-                let t = comptype!();
-                let s = seq!(len);
-                Value::List(t, s)
-            },
-            Tag::Map => {
-                let len = tag_with_szvar!(l4);
-                let tk = comptype!();
-                let tv = comptype!();
-                let s = seq_map!(len);
-                Value::Map((tk, tv), s)
-            },
-            Tag::Tuple => {
-                let len = tag_with_szvar!(l4);
-                let s = seq!(len);
-                Value::Tuple(s)
-            },
-            Tag::Alias => {
-                tag_with_noop!(l4);
-                let ptr = typeptr!();
-                let v = value!();
-                Value::Alias(ptr, Box::new(v))
-            },
-            Tag::Enum => {
-                let ev = tag_with_uvar!(l4) as u8;
-                let ptr = typeptr!();
-                let v = value!();
-                Value::Enum(ptr, ev, Box::new(v))
-            },
-            Tag::Struct => {
-                let len = tag_with_szvar!(l4);
-                let ptr = typeptr!();
-                let s = seq!(len);
-                Value::Struct(ptr, s)
-            },
-            Tag::Type => {
-                tag_with_noop!(l4);
-                let t = comptype!();
-                Value::Type(t)
-            },
-            Tag::ObjectRef => {
-                tag_with_noop!(l4);
-                let ot = fixed_u16!();
-                let oid = fixed_u64!();
-                Value::ObjectRef(ObjectRef { ot, oid })
-            },
-        })
-    }
-
-    pub fn decode(buf: &[u8]) -> Result<Value, DecodeError> {
-        let mut cur = Cursor::new(buf);
-        Value::decode_from(&mut cur)
+    pub fn decode(buf: &[u8]) -> Result<Value> {
+        let mut reader = Reader::new(buf);
+        reader.val()
     }
 }
