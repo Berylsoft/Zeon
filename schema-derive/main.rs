@@ -220,13 +220,14 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Enum(variants) => {
+            let len: u8 = variants.len().try_into().unwrap();
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let (names, tys): (Vec<String>, Vec<Type>) = variants.clone().into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
             let names4 = names.clone();
-            let i = (0..variants.len() as u8).map(|i| quote!(#i));
+            let i = (0..len).map(|i| quote!(#i));
             let i2 = i.clone();
             let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
             let des = tys.clone().into_iter().map(|ty| type2de(ty, quote!(val)));

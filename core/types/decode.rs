@@ -234,7 +234,7 @@ impl<'a> Reader<'a> {
                 Value::Tuple(s)
             },
             HTag::Enum => {
-                let ev = self.with_uvar(l4)? as u8;
+                let ev = self.with_uvar(l4)?.try_into()?;
                 let ptr = self.typeptr()?;
                 let v = self.val()?;
                 Value::Enum(ptr, ev, Box::new(v))

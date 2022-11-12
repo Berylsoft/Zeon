@@ -79,7 +79,7 @@ impl Writer {
             },
 
             Type::Tuple(s) => {
-                self.u8(s.len() as u8);
+                self.u8(s.len().try_into().unwrap());
 
                 for t in s {
                     self.ty(t);
