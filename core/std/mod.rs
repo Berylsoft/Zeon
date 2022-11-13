@@ -167,16 +167,13 @@ deftypes! {
     0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
     0x0005 | std :"types" :"trait" -> def_struct! {
         "attrs"  -> list!(enum_t!(:"types" :"trait-attr"))
-        "extends" -> list!(enum_t!(:"meta" :"typeptr"))
+        "extends" -> list!(TypePtr)
     }
     0x0006 | std :"pattern" :"refset-item" -> def_enum! {
         "remove" -> ObjectRef
         "add"    -> ObjectRef
     }
-    0x0007 | std :"meta" :"typeptr" -> def_enum! {
-        "std"  -> alias_t!(:"meta" :"typeptr-std")
-        "hash" -> alias_t!(:"meta" :"typeptr-hash")
-    }
+
     0x0008 | std :"prim" :"u8" -> def_alias! (UInt)
     0x0009 | std :"prim" :"u16" -> def_alias! (UInt)
     0x000A | std :"prim" :"u32" -> def_alias! (UInt)

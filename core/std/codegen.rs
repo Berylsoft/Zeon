@@ -1,7 +1,7 @@
 // This is a generated file. Do not modify, run `cargo run --bin schema-derive` to update.
 #![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]
 pub mod types {
-    use crate::{types::*, meta::ObjectRef};
+    use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Deftype {
         Alias(Type),
@@ -159,7 +159,7 @@ pub mod types {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Trait {
         pub attrs: Vec<super::types::TraitAttr>,
-        pub extends: Vec<super::meta::Typeptr>,
+        pub extends: Vec<TypePtr>,
     }
     impl Schema for Trait {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(5u16);
@@ -169,8 +169,8 @@ pub mod types {
                 vec![
                     Value::List(Type::Enum(TypePtr::from_u16_unchecked(2u16)), self.attrs
                     .into_iter().map(| sv | sv.serialize()).collect()),
-                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(7u16)), self
-                    .extends.into_iter().map(| sv | sv.serialize()).collect()),
+                    Value::List(Type::TypePtr, self.extends.into_iter().map(| sv |
+                    Value::TypePtr(sv)).collect()),
                 ],
             )
         }
@@ -188,14 +188,14 @@ pub mod types {
                 extends: extends
                     .into_list()
                     .into_iter()
-                    .map(|sv| sv.deserialize_into())
+                    .map(|sv| sv.into_typeptr())
                     .collect(),
             }
         }
     }
 }
 pub mod prim {
-    use crate::{types::*, meta::ObjectRef};
+    use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UnixTs(pub u64);
     impl Schema for UnixTs {
@@ -286,7 +286,7 @@ pub mod prim {
     }
 }
 pub mod pattern {
-    use crate::{types::*, meta::ObjectRef};
+    use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum RefsetItem {
         Remove(ObjectRef),
@@ -320,38 +320,7 @@ pub mod pattern {
     }
 }
 pub mod meta {
-    use crate::{types::*, meta::ObjectRef};
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub enum Typeptr {
-        Std(super::meta::TypeptrStd),
-        Hash(super::meta::TypeptrHash),
-    }
-    impl Schema for Typeptr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(7u16);
-        fn serialize(self) -> Value {
-            Value::Enum(
-                TypePtr::from_u16_unchecked(7u16),
-                match &self {
-                    Self::Std(_) => 0u8,
-                    Self::Hash(_) => 1u8,
-                },
-                Box::new(
-                    match self {
-                        Self::Std(val) => val.serialize(),
-                        Self::Hash(val) => val.serialize(),
-                    },
-                ),
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let (variant, val) = val.into_enum();
-            match variant {
-                0u8 => Self::Std(val.deserialize_into()),
-                1u8 => Self::Hash(val.deserialize_into()),
-                _ => unreachable!(),
-            }
-        }
-    }
+    use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TypeptrStd(pub u64);
     impl Schema for TypeptrStd {
