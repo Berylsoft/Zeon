@@ -131,6 +131,13 @@ impl Writer {
         self.with_uvar(htag, sz.try_into().unwrap())
     }
 
+    fn with_fvar(&mut self, htag: HTag, f: u64) {
+        let len = crate::util::float_find_zero(f);
+        self.with_l4(htag, len);
+        let buf = f.to_be_bytes();
+        self.bytes(&buf[0..(len as usize)]);
+    }
+
     fn val_seq(&mut self, s: &Vec<Value>) {
 
         for v in s {
@@ -172,8 +179,7 @@ impl Writer {
 
             },
             Value::Float(f) => {
-                self.with_l4(htag, 0);
-                self.u64(*f);
+                self.with_fvar(htag, *f);
 
             },
             Value::String(b) => {

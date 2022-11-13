@@ -77,3 +77,29 @@ pub const fn const_bytes_equal(lhs: &[u8], rhs: &[u8]) -> bool {
 pub const fn const_str_equal(lhs: &str, rhs: &str) -> bool {
     const_bytes_equal(lhs.as_bytes(), rhs.as_bytes())
 }
+
+pub fn float_find_zero(f: u64) -> u8 {
+    let mut buf = f.to_be_bytes();
+    buf.reverse();
+    let mut i = 0u8;
+    for b in buf {
+        if b != 0 {
+            return 8 - i;
+        }
+        i += 1;
+    }
+    return 0;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        assert_eq!(float_find_zero(0x00_00_00_00_00_00_00_00), 0);
+        assert_eq!(float_find_zero(0x01_00_00_00_00_00_00_00), 1);
+        assert_eq!(float_find_zero(0x01_00_00_01_00_00_00_00), 4);
+        assert_eq!(float_find_zero(0x01_00_00_01_00_00_00_01), 8);
+    }
+}

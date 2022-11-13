@@ -132,8 +132,11 @@ impl<'a> Reader<'a> {
         Ok(self.with_uvar(l4)?.try_into()?)
     }
 
-    fn with_fvar(&mut self, _l4: u8) -> Result<u64> {
-        self.u64()
+    fn with_fvar(&mut self, l4: u8) -> Result<u64> {
+        assert!(l4 <= 8);
+        let mut buf = [0u8; 8];
+        self.bytes.read_exact(&mut buf[0..l4 as usize])?;
+        Ok(u64::from_be_bytes(buf))
     }
 
     fn val_seq(&mut self, size: usize) -> Result<Vec<Value>> {
