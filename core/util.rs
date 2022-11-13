@@ -81,14 +81,12 @@ pub const fn const_str_equal(lhs: &str, rhs: &str) -> bool {
 pub fn float_find_zero(f: u64) -> u8 {
     let mut buf = f.to_be_bytes();
     buf.reverse();
-    let mut i = 0u8;
-    for b in buf {
+    for (i, b) in buf.into_iter().enumerate() {
         if b != 0 {
-            return 8 - i;
+            return 8 - (i as u8);
         }
-        i += 1;
     }
-    return 0;
+    0
 }
 
 #[cfg(test)]

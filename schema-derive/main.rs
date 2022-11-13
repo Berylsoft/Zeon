@@ -159,7 +159,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
 
 fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
     match ty {
-        Type::Unit => quote!({let _ = #v; Value::Unit}),
+        Type::Unit => quote!({ let _ = #v; Value::Unit }),
         Type::Bool => quote!(Value::Bool(#v)),
         Type::Int => quote!(Value::Int(#v)),
         Type::UInt => quote!(Value::UInt(#v)),
@@ -226,7 +226,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
         DefType::Enum(variants) => {
             let len: u8 = variants.len().try_into().unwrap();
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
-            let (names, tys): (Vec<String>, Vec<Type>) = variants.clone().into_iter().unzip();
+            let (names, tys): (Vec<String>, Vec<Type>) = variants.into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
@@ -321,7 +321,12 @@ fn derive_file() -> TokenStream {
         let out = derive_def(ptr, dt);
         map.get_mut(&path).unwrap().push(out);
     }
-    let mut file = quote!(#![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]);
+    let mut file = quote!(#![allow(
+        unused_imports, // `use` above every mod
+        clippy::unit_arg, // variant_num => Enum::Variant(val.into_unit()),
+        clippy::let_unit_value, // Enum::Variant(val) => { let _ = val; Value::Unit },
+        clippy::redundant_closure, // Value::List(Type::SimpleType, self.field.into_iter().map(|sv| Value::SimpleType(sv)).collect()),
+    )]);
     file.extend(map.into_iter().map(|(path, outs)| {
         let path = ident(path);
         quote!(

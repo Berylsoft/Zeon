@@ -1,5 +1,10 @@
 // This is a generated file. Do not modify, run `cargo run --bin schema-derive` to update.
-#![allow(unused_imports, clippy::unit_arg, clippy::let_unit_value)]
+#![allow(
+    unused_imports,
+    clippy::unit_arg,
+    clippy::let_unit_value,
+    clippy::redundant_closure,
+)]
 pub mod types {
     use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
