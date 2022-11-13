@@ -43,6 +43,10 @@ impl<'a> Reader<'a> {
         Ok(u64::from_be_bytes(self.bytes_sized()?))
     }
 
+    fn i64(&mut self) -> Result<i64> {
+        Ok(i64::from_be_bytes(self.bytes_sized()?))
+    }
+
     fn typeptr(&mut self) -> Result<TypePtr> {
         let h8 = self.u8()?;
         Ok(match h8 {
@@ -70,6 +74,7 @@ impl<'a> Reader<'a> {
             Tag::Type => Type::Type,
             Tag::TypePtr => Type::TypePtr,
             Tag::ObjectRef => Type::ObjectRef,
+            Tag::Timestamp => Type::Timestamp,
 
             Tag::Option => {
                 let t = self.ty()?;
@@ -194,6 +199,11 @@ impl<'a> Reader<'a> {
                         let oid = self.u64()?;
                         Value::ObjectRef(ObjectRef { ot, oid })
                     },
+                    LTag::Timestamp => {
+                        let secs = self.i64()?;
+                        let nanos = self.u32()?;
+                        Value::Timestamp(Timestamp { secs, nanos })
+                    }
                 }
             },
             HTag::Int => {

@@ -50,10 +50,11 @@ fn test() {
             Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(TypePtr::from_u16(0xfe50))))))),
             Value::TypePtr(TypePtr::Hash(hex!("fedcba98765432"))),
             Value::ObjectRef(ObjectRef { ot: 0x0123, oid: 0x0123456789abcdef }),
+            Value::Timestamp(Timestamp { secs: 0x000000002920d7f6, nanos: 0x3161fcd4 }),
             Value::Option(Type::Tuple(vec![Type::Int, Type::Unit]), Box::new(Some(Value::Tuple(vec![Value::Int(9), Value::Unit])))),
         ]),
         hex!("
-        8c 10
+        8c 11
         00
         01
         1e 00ed5be1
@@ -69,6 +70,7 @@ fn test() {
         06 08 08 0d fe50
         07 ff fedcba98765432
         08 0123 0123456789abcdef
+        09 000000002920d7f6 3161fcd4
         04 0a 02 02 00 82 1c 12 00
         ")
     )

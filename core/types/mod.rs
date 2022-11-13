@@ -1,4 +1,4 @@
-use crate::meta::ObjectRef;
+use crate::meta::{ObjectRef, Timestamp};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TypePtr {
@@ -31,6 +31,7 @@ pub enum Tag {
     Type,      // 0x0E
     TypePtr,   // 0x0F
     ObjectRef, // 0x10
+    Timestamp, // 0x11
 }
 
 #[repr(u8)]
@@ -61,6 +62,7 @@ pub enum LTag {
     Type,      // 0x6
     TypePtr,   // 0x7
     ObjectRef, // 0x8
+    Timestamp, // 0x9
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,6 +88,7 @@ pub enum Type {
     Type,
     TypePtr,
     ObjectRef,
+    Timestamp,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -111,6 +114,7 @@ pub enum Value {
     Type(Type),
     TypePtr(TypePtr),
     ObjectRef(ObjectRef),
+    Timestamp(Timestamp),
 }
 
 mod casting;

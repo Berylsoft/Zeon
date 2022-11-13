@@ -74,6 +74,7 @@ impl Type {
             Type::Type      => Tag::Type,
             Type::TypePtr   => Tag::TypePtr,
             Type::ObjectRef => Tag::ObjectRef,
+            Type::Timestamp => Tag::Timestamp,
         }
     }
 }
@@ -98,6 +99,7 @@ impl Value {
             Value::Type(_)       => Tag::Type,
             Value::TypePtr(_)    => Tag::TypePtr,
             Value::ObjectRef(_)  => Tag::ObjectRef,
+            Value::Timestamp(_)  => Tag::Timestamp,
         }
     }
 
@@ -114,13 +116,14 @@ impl Value {
             Value::Enum(_, _, _) => HTag::Enum,
             Value::Struct(_, _)  => HTag::Struct,
 
-            Value::Type(_)       |
-            Value::TypePtr(_)    |
-            Value::ObjectRef(_)  |
             Value::Unit          |
             Value::Bool(_)       |
             Value::Option(_, _)  |
-            Value::Alias(_, _)   => HTag::L4,
+            Value::Alias(_, _)   |
+            Value::Type(_)       |
+            Value::TypePtr(_)    |
+            Value::ObjectRef(_)  |
+            Value::Timestamp(_)  => HTag::L4,
         }
     }
 
@@ -143,6 +146,7 @@ impl Value {
             Value::Type(_) => Type::Type,
             Value::TypePtr(_) => Type::TypePtr,
             Value::ObjectRef(_) => Type::ObjectRef,
+            Value::Timestamp(_) => Type::Timestamp,
         }
     }
 }
@@ -278,6 +282,13 @@ impl Value {
 
     pub fn into_objectref(self) -> ObjectRef {
         if let Value::ObjectRef(v) = self {
+            return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_timestamp(self) -> Timestamp {
+        if let Value::Timestamp(v) = self {
             return v;
         }
         unreachable!()

@@ -43,6 +43,7 @@ fn type2tokens(ty: Type) -> TokenStream {
         Type::Type => quote!(Type::Type),
         Type::TypePtr => quote!(Type::TypePtr),
         Type::ObjectRef => quote!(Type::ObjectRef),
+        Type::Timestamp => quote!(Type::Timestamp),
 
         Type::Option(sty) => {
             let sty = type2tokens(*sty);
@@ -89,6 +90,7 @@ fn type2type(ty: Type) -> TokenStream {
         Type::Type => quote!(Type),
         Type::TypePtr => quote!(TypePtr),
         Type::ObjectRef => quote!(ObjectRef),
+        Type::Timestamp => quote!(Timestamp),
 
         Type::Option(sty) => {
             let sty = type2type(*sty);
@@ -126,6 +128,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         Type::Type => quote!(#v.into_type()),
         Type::TypePtr => quote!(#v.into_typeptr()),
         Type::ObjectRef => quote!(#v.into_objectref()),
+        Type::Timestamp => quote!(#v.into_timestamp()),
 
         Type::Option(sty) => {
             let sty = type2de(*sty, quote!(sv));
@@ -166,6 +169,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::Type => quote!(Value::Type(#v)),
         Type::TypePtr => quote!(Value::TypePtr(#v)),
         Type::ObjectRef => quote!(Value::ObjectRef(#v)),
+        Type::Timestamp => quote!(Value::Timestamp(#v)),
 
         Type::Option(sty) => {
             let sty_ty = type2tokens(*sty.clone());
@@ -322,7 +326,7 @@ fn derive_file() -> TokenStream {
         let path = ident(path);
         quote!(
             pub mod #path {
-                use crate::{types::*, meta::ObjectRef};
+                use crate::{types::*, meta::{ObjectRef, Timestamp}};
                 #(#outs)*
             }
         )

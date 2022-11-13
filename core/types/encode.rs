@@ -41,6 +41,10 @@ impl Writer {
         self.bytes(n.to_be_bytes());
     }
 
+    fn i64(&mut self, n: i64) {
+        self.bytes(n.to_be_bytes());
+    }
+
     fn typeptr(&mut self, ptr: &TypePtr) {
         match ptr {
             TypePtr::Std(stdptr) => {
@@ -65,7 +69,8 @@ impl Writer {
             Type::Bytes |
             Type::Type |
             Type::TypePtr |
-            Type::ObjectRef => {},
+            Type::ObjectRef |
+            Type::Timestamp => {},
 
             Type::Option(t) |
             Type::List(t) => {
@@ -253,6 +258,12 @@ impl Writer {
                 self.with_ltag(htag, LTag::ObjectRef);
                 self.u16(*ot);
                 self.u64(*oid);
+
+            }
+            Value::Timestamp(Timestamp { secs, nanos }) => {
+                self.with_ltag(htag, LTag::Timestamp);
+                self.i64(*secs);
+                self.u32(*nanos);
 
             }
         }
