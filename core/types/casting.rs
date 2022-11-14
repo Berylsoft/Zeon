@@ -71,6 +71,7 @@ impl Type {
             Type::Tuple(_)  => Tag::Tuple,
             Type::Alias(_)  => Tag::Alias,
             Type::Enum(_)   => Tag::Enum,
+            Type::CEnum(_)  => Tag::CEnum,
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
             Type::TypePtr   => Tag::TypePtr,
@@ -95,6 +96,7 @@ impl Value {
             Value::Map(_, _)     => Tag::Map,
             Value::Tuple(_)      => Tag::Tuple,
             Value::Alias(_, _)   => Tag::Alias,
+            Value::CEnum(_, _)   => Tag::CEnum,
             Value::Enum(_, _, _) => Tag::Enum,
             Value::Struct(_, _)  => Tag::Struct,
             Value::Type(_)       => Tag::Type,
@@ -114,6 +116,7 @@ impl Value {
             Value::List(_, _)    => HTag::List,
             Value::Map(_, _)     => HTag::Map,
             Value::Tuple(_)      => HTag::Tuple,
+            Value::CEnum(_, _)   => HTag::CEnum,
             Value::Enum(_, _, _) => HTag::Enum,
             Value::Struct(_, _)  => HTag::Struct,
 
@@ -142,6 +145,7 @@ impl Value {
             Value::Map((tk, tv), _) => Type::Map(Box::new(tk.clone()), Box::new(tv.clone())),
             Value::Tuple(seq) => Type::Tuple(seq.iter().map(|v| v.as_type()).collect()),
             Value::Alias(ptr, _) => Type::Alias(*ptr),
+            Value::CEnum(ptr, _) => Type::CEnum(*ptr),
             Value::Enum(ptr, _, _) => Type::Enum(*ptr),
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
@@ -249,6 +253,13 @@ impl Value {
     pub fn into_alias(self) -> Value {
         if let Value::Alias(_ptr, v) = self {
             return *v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_c_enum(self) -> EnumVariant {
+        if let Value::CEnum(_ptr, ev) = self {
+            return ev;
         }
         unreachable!()
     }

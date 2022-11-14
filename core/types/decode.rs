@@ -105,6 +105,10 @@ impl<'a> Reader<'a> {
                 let ptr = self.typeptr()?;
                 Type::Alias(ptr)
             },
+            Tag::CEnum => {
+                let ptr = self.typeptr()?;
+                Type::CEnum(ptr)
+            },
             Tag::Enum => {
                 let ptr = self.typeptr()?;
                 Type::Enum(ptr)
@@ -246,6 +250,11 @@ impl<'a> Reader<'a> {
                 let len = self.with_szvar(l4)?;
                 let s = self.val_seq(len)?;
                 Value::Tuple(s)
+            },
+            HTag::CEnum => {
+                let ev = self.with_uvar(l4)?.try_into()?;
+                let ptr = self.typeptr()?;
+                Value::CEnum(ptr, ev)
             },
             HTag::Enum => {
                 let ev = self.with_uvar(l4)?.try_into()?;

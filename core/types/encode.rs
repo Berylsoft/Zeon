@@ -94,6 +94,7 @@ impl Writer {
             }
 
             Type::Alias(ptr) |
+            Type::CEnum(ptr) |
             Type::Enum(ptr) |
             Type::Struct(ptr) => {
                 self.typeptr(ptr);
@@ -231,6 +232,11 @@ impl Writer {
                 self.with_ltag(htag, LTag::Alias);
                 self.typeptr(ptr);
                 self.val(v);
+
+            },
+            Value::CEnum(ptr, ev) => {
+                self.with_uvar(htag, *ev as u64);
+                self.typeptr(ptr);
 
             },
             Value::Enum(ptr, ev, v) => {

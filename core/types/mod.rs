@@ -27,12 +27,13 @@ pub enum Tag {
     Map,       // 0x0A
     Tuple,     // 0x0B
     Alias,     // 0x0C
-    Enum,      // 0x0D
-    Struct,    // 0x0E
-    Type,      // 0x0F
-    TypePtr,   // 0x10
-    ObjectRef, // 0x11
-    Timestamp, // 0x12
+    CEnum,     // 0x0D
+    Enum,      // 0x0E
+    Struct,    // 0x0F
+    Type,      // 0x00
+    TypePtr,   // 0x11
+    ObjectRef, // 0x12
+    Timestamp, // 0x13
 }
 
 #[repr(u8)]
@@ -47,8 +48,9 @@ pub enum HTag {
     List,      // 0x6
     Map,       // 0x7
     Tuple,     // 0x8
-    Enum,      // 0x9
-    Struct,    // 0xA
+    CEnum,     // 0x9
+    Enum,      // 0xA
+    Struct,    // 0xB
 }
 
 #[repr(u8)]
@@ -85,6 +87,7 @@ pub enum Type {
     Tuple(Vec<Type>),
 
     Alias(TypePtr),
+    CEnum(TypePtr),
     Enum(TypePtr),
     Struct(TypePtr),
 
@@ -111,6 +114,7 @@ pub enum Value {
     Tuple(Vec<Value>),
 
     Alias(TypePtr, Box<Value>),
+    CEnum(TypePtr, EnumVariant),
     Enum(TypePtr, EnumVariant, Box<Value>),
     Struct(TypePtr, Vec<Value>),
 

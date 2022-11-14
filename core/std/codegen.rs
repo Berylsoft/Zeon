@@ -10,6 +10,7 @@ pub mod types {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Deftype {
         Alias(Type),
+        CEnum(Vec<String>),
         Enum(Vec<(String, Type)>),
         Struct(Vec<(String, Type)>),
     }
@@ -20,12 +21,19 @@ pub mod types {
                 TypePtr::from_u16_unchecked(0u16),
                 match &self {
                     Self::Alias(_) => 0u8,
-                    Self::Enum(_) => 1u8,
-                    Self::Struct(_) => 2u8,
+                    Self::CEnum(_) => 1u8,
+                    Self::Enum(_) => 2u8,
+                    Self::Struct(_) => 3u8,
                 },
                 Box::new(
                     match self {
                         Self::Alias(val) => Value::Type(val),
+                        Self::CEnum(val) => {
+                            Value::List(
+                                Type::String,
+                                val.into_iter().map(|sv| Value::String(sv)).collect(),
+                            )
+                        }
                         Self::Enum(val) => {
                             Value::Map(
                                 (Type::String, Type::Type),
@@ -53,6 +61,11 @@ pub mod types {
             match variant {
                 0u8 => Self::Alias(val.into_type()),
                 1u8 => {
+                    Self::CEnum(
+                        val.into_list().into_iter().map(|sv| sv.into_string()).collect(),
+                    )
+                }
+                2u8 => {
                     Self::Enum(
                         val
                             .into_map()
@@ -61,7 +74,7 @@ pub mod types {
                             .collect(),
                     )
                 }
-                2u8 => {
+                3u8 => {
                     Self::Struct(
                         val
                             .into_map()
@@ -77,7 +90,7 @@ pub mod types {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TraitAttr {
         pub attr_type: super::types::TraitAttrType,
-        pub attr_name: super::prim::SimpleName,
+        pub attr_name: String,
         pub val_type: Type,
     }
     impl Schema for TraitAttr {
@@ -86,7 +99,7 @@ pub mod types {
             Value::Struct(
                 TypePtr::from_u16_unchecked(2u16),
                 vec![
-                    self.attr_type.serialize(), self.attr_name.serialize(),
+                    self.attr_type.serialize(), Value::String(self.attr_name),
                     Value::Type(self.val_type),
                 ],
             )
@@ -98,65 +111,41 @@ pub mod types {
                 .unwrap();
             Self {
                 attr_type: attr_type.deserialize_into(),
-                attr_name: attr_name.deserialize_into(),
+                attr_name: attr_name.into_string(),
                 val_type: val_type.into_type(),
             }
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum TraitAttrType {
-        Const(()),
-        Mut(()),
-        Iter(()),
-        Iterset(()),
-        Complex(()),
+        Const,
+        Mut,
+        Iter,
+        Iterset,
+        Complex,
     }
     impl Schema for TraitAttrType {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(3u16);
         fn serialize(self) -> Value {
-            Value::Enum(
+            Value::CEnum(
                 TypePtr::from_u16_unchecked(3u16),
                 match &self {
-                    Self::Const(_) => 0u8,
-                    Self::Mut(_) => 1u8,
-                    Self::Iter(_) => 2u8,
-                    Self::Iterset(_) => 3u8,
-                    Self::Complex(_) => 4u8,
+                    Self::Const => 0u8,
+                    Self::Mut => 1u8,
+                    Self::Iter => 2u8,
+                    Self::Iterset => 3u8,
+                    Self::Complex => 4u8,
                 },
-                Box::new(
-                    match self {
-                        Self::Const(val) => {
-                            let _ = val;
-                            Value::Unit
-                        }
-                        Self::Mut(val) => {
-                            let _ = val;
-                            Value::Unit
-                        }
-                        Self::Iter(val) => {
-                            let _ = val;
-                            Value::Unit
-                        }
-                        Self::Iterset(val) => {
-                            let _ = val;
-                            Value::Unit
-                        }
-                        Self::Complex(val) => {
-                            let _ = val;
-                            Value::Unit
-                        }
-                    },
-                ),
             )
         }
         fn deserialize(val: Value) -> Self {
-            let (variant, val) = val.into_enum();
+            let variant = val.into_c_enum();
             match variant {
-                0u8 => Self::Const(val.into_unit()),
-                1u8 => Self::Mut(val.into_unit()),
-                2u8 => Self::Iter(val.into_unit()),
-                3u8 => Self::Iterset(val.into_unit()),
-                4u8 => Self::Complex(val.into_unit()),
+                0u8 => Self::Const,
+                1u8 => Self::Mut,
+                2u8 => Self::Iter,
+                3u8 => Self::Iterset,
+                4u8 => Self::Complex,
                 _ => unreachable!(),
             }
         }

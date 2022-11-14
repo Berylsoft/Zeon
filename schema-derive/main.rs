@@ -68,6 +68,10 @@ fn type2tokens(ty: Type) -> TokenStream {
             let ptr = ptr2tokens(ptr);
             quote!(Type::Alias(#ptr))
         },
+        Type::CEnum(ptr) => {
+            let ptr = ptr2tokens(ptr);
+            quote!(Type::CEnum(#ptr))
+        },
         Type::Enum(ptr) => {
             let ptr = ptr2tokens(ptr);
             quote!(Type::Enum(#ptr))
@@ -113,6 +117,7 @@ fn type2type(ty: Type) -> TokenStream {
         },
         
         Type::Alias(ptr) |
+        Type::CEnum(ptr) |
         Type::Enum(ptr) |
         Type::Struct(ptr) => ptr2rustpath(ptr),
     }
@@ -155,6 +160,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         }
 
         Type::Alias(_) |
+        Type::CEnum(_) |
         Type::Enum(_) |
         Type::Struct(_) => quote!(#v.deserialize_into()),
     }
@@ -198,6 +204,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         },
 
         Type::Alias(_) |
+        Type::CEnum(_) |
         Type::Enum(_) |
         Type::Struct(_) => quote!(#v.serialize()),
     }
@@ -235,6 +242,43 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 impl From<#name> for #ty {
                     fn from(val: #name) -> #ty {
                         val.0
+                    }
+                }
+            )
+        },
+        DefType::CEnum(names) => {
+            let len: u8 = names.len().try_into().unwrap();
+            let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
+            let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
+            let names2 = names.clone();
+            let names4 = names.clone();
+            let i = (0..len).map(|i| quote!(#i));
+            let i2 = i.clone();
+
+            quote!(
+                #[derive(Clone, Debug, PartialEq, Eq)]
+                pub enum #name {
+                    #(#names,)*
+                }
+
+                impl Schema for #name {
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+
+                    fn serialize(self) -> Value {
+                        Value::CEnum(
+                            TypePtr::from_u16_unchecked(#ptr),
+                            match &self {
+                                #(Self::#names2 => #i,)*
+                            },
+                        )
+                    }
+
+                    fn deserialize(val: Value) -> Self {
+                        let variant = val.into_c_enum();
+                        match variant {
+                            #(#i2 => Self::#names4,)*
+                            _ => unreachable!(),
+                        }
                     }
                 }
             )

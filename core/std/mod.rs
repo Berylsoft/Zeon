@@ -91,12 +91,15 @@ macro_rules! def_alias {
     };
 }
 
-macro_rules! def_enum {
+macro_rules! def_c_enum {
     ($($variant:literal)*) => {
-        DefType::Enum(vec![
-            $(($variant.to_owned(), Unit),)*
+        DefType::CEnum(vec![
+            $($variant.to_owned(),)*
         ])
     };
+}
+
+macro_rules! def_enum {
     ($($variant:literal -> $ty:expr)*) => {
         DefType::Enum(vec![
             $(($variant.to_owned(), $ty),)*
@@ -116,8 +119,8 @@ macro_rules! def_trait {
     ($($attr_type:ident $attr_name:literal -> $val_type:expr)* $(;extends $($extend:expr,)*)*) => {
         Trait {
             attrs: vec![$(TraitAttr {
-                attr_type: TraitAttrType::$attr_type(()),
-                attr_name: SimpleName($attr_name.to_owned()),
+                attr_type: TraitAttrType::$attr_type,
+                attr_name: $attr_name.to_owned(),
                 val_type: $val_type,
             })*],
             extends: vec![$($($extend,)*)*]
@@ -177,6 +180,7 @@ def! {
     types {
         0x0000 | std :"types" :"deftype" -> def_enum! {
             "alias"  -> Type
+            "c-enum"  -> list!(String /* simple-name */)
             "enum"   -> map!(String /* simple-name */, Type)
             "struct" -> map!(String /* simple-name */, Type)
         }
@@ -186,7 +190,7 @@ def! {
             "attr-name" -> String /* simple-name */
             "val-type"  -> Type
         }
-        0x0003 | std :"types" :"trait-attr-type" -> def_enum! {
+        0x0003 | std :"types" :"trait-attr-type" -> def_c_enum! {
             "const"
             "mut"
             "iter"
@@ -245,7 +249,7 @@ mod test {
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }), 0x0001);
         assert_eq!(std.types.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
-        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
-        assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Iterset, attr_name: "traits", val_type: TypePtr }], extends: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut, attr_name: "name", val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
     }
 }

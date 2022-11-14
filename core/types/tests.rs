@@ -45,16 +45,17 @@ fn test() {
             Value::Option(Type::String, Box::new(None)),
             Value::Option(Type::Bool, Box::new(Some(Value::Bool(true)))),
             Value::Alias(TypePtr::Hash(hex!("fedcba98765432")), Box::new(Value::Bytes(b"\xff".to_vec()))),
+            Value::CEnum(TypePtr::from_u16(0x5f50), 11),
             Value::Enum(TypePtr::from_u16(0x5f49), 5, Box::new(Value::Int(5))),
             Value::Enum(TypePtr::from_u16(0x00aa), 163, Box::new(Value::UInt(12))),
             Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(TypePtr::from_u16(0xfe50))))))),
             Value::TypePtr(TypePtr::Hash(hex!("fedcba98765432"))),
             Value::ObjectRef(ObjectRef { ot: 0x0123, oid: 0x0123456789abcdef }),
             Value::Timestamp(Timestamp { secs: 0x000000002920d7f6, nanos: 0x3161fcd4 }),
-            Value::Option(Type::Tuple(vec![Type::Int, Type::Unit]), Box::new(Some(Value::Tuple(vec![Value::Int(9), Value::Unit])))),
+            Value::Option(Type::Tuple(vec![Type::Int, Type::Unit, Type::Unknown]), Box::new(Some(Value::Tuple(vec![Value::Int(9), Value::Unit, Value::Bool(true)])))),
         ]),
         hex!("
-        8c 11
+        8c 12
         00
         01
         1e 00ed5be1
@@ -62,16 +63,17 @@ fn test() {
         32 4049
         49 426572796c6f736674
         53 280029
-        03 06
+        03 06 
         04 02 02
         05 ff fedcba98765432 51 ff
-        95 5f49 1a
-        9c a3 00aa 2c 0c
-        06 09 09 0e fe50
+        9b 5f50
+        a5 5f49 1a
+        ac a3 00aa 2c 0c
+        06 09 09 0f fe50
         07 ff fedcba98765432
         08 0123 0123456789abcdef
         09 000000002920d7f6 3161fcd4
-        04 0b 02 03 01 82 1c 12 00
+        04  0b 03 03 01 00  83 1c 12 00 02
         ")
     )
 }
