@@ -1,5 +1,5 @@
 use ::std::collections::BTreeMap;
-use crate::types::*;
+use crate::types::{self, traits::*, *};
 
 #[derive(Clone, Debug)]
 pub struct Path {
@@ -42,7 +42,43 @@ impl Path {
     }
 }
 
-// region: deftype macros
+macro_rules! list {
+    ($ty:expr) => {
+        types::Type::List(Box::new($ty))
+    };
+}
+
+macro_rules! map {
+    ($tyk:expr, $tyv:expr) => {
+        types::Type::Map(Box::new($tyk), Box::new($tyv))
+    };
+}
+
+macro_rules! ty {
+    (:$p:literal :$n:literal) => {{
+        const TY: types::TypePtr = types::TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
+        TY
+    }};
+}
+
+macro_rules! alias_t {
+    (:$p:literal :$n:literal) => {
+        types::Type::Alias(ty!(:$p :$n))
+    };
+}
+
+macro_rules! enum_t {
+    (:$p:literal :$n:literal) => {
+        types::Type::Enum(ty!(:$p :$n))
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! struct_t {
+    (:$p:literal :$n:literal) => {
+        types::Type::Struct(ty!(:$p :$n))
+    };
+}
 
 macro_rules! def_alias {
     ($ty:expr) => {
@@ -71,12 +107,29 @@ macro_rules! def_struct {
     };
 }
 
-macro_rules! deftypes {
-    ($($stdptr:literal | std :$path:literal :$name:literal -> $deftype:expr)*) => {
+macro_rules! def_trait {
+    ($($attr_type:ident $attr_name:literal -> $val_type:expr)* $(;extends $($extend:expr,)*)*) => {
+        Trait {
+            attrs: vec![$(TraitAttr {
+                attr_type: TraitAttrType::$attr_type(()),
+                attr_name: SimpleName($attr_name.to_owned()),
+                val_type: $val_type,
+            })*],
+            extends: vec![$($($extend,)*)*]
+        }
+    };
+}
+
+macro_rules! def {
+    {
+        types { $($stdptr:literal | std :$path:literal :$name:literal -> $deftype:expr)* }
+        traits { $($stdptr2:literal | std :$path2:literal :$name2:literal -> $deftrait:expr)* }
+    } => {
         #[deny(unreachable_patterns)] // deny duplicate ptr
         pub const fn ptr2path(stdptr: u16) -> Option<Path> {
             Some(match stdptr {
                 $($stdptr => Path { path: $path, name: $name },)*
+                $($stdptr2 => Path { path: $path2, name: $name2 },)*
                 _ => return None,
             })
         }
@@ -84,6 +137,7 @@ macro_rules! deftypes {
         pub fn path2ptr(path: Path) -> Option<u16> {
             Some(match path {
                 $(Path { path: $path, name: $name } => $stdptr,)*
+                $(Path { path: $path2, name: $name2 } => $stdptr2,)*
                 _ => return None,
             })
         }
@@ -95,104 +149,84 @@ macro_rules! deftypes {
             ) {
                 return $stdptr
             })*
+            $(if (
+                crate::util::const_str_equal(path.path, $path2) &
+                crate::util::const_str_equal(path.name, $name2)
+            ) {
+                return $stdptr2
+            })*
             unreachable!();
         }
 
         pub fn init_deftypes() -> BTreeMap<u16, DefType> {
-            use crate::types::Type::*;
-            macro_rules! list {
-                ($ty:expr) => {
-                    List(Box::new($ty))
-                };
-            }
-            macro_rules! map {
-                ($tyk:expr, $tyv:expr) => {
-                    Map(Box::new($tyk), Box::new($tyv))
-                };
-            }
-            macro_rules! ty {
-                (:$p:literal :$n:literal) => {{
-                    const TY: crate::types::TypePtr = crate::types::TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
-                    TY
-                }};
-            }
-            macro_rules! alias_t {
-                (:$p:literal :$n:literal) => {
-                    Alias(ty!(:$p :$n))
-                };
-            }
-            macro_rules! enum_t {
-                (:$p:literal :$n:literal) => {
-                    Enum(ty!(:$p :$n))
-                };
-            }
-            #[allow(unused_macros)]
-            macro_rules! struct_t {
-                (:$p:literal :$n:literal) => {
-                    Struct(ty!(:$p :$n))
-                };
-            }
+            use types::Type::*;
             [
                 $(($stdptr, $deftype),)*
+            ].into_iter().collect()
+        }
+
+        pub fn init_traits() -> BTreeMap<u16, Trait> {
+            use types::Type::*;
+            [
+                $(($stdptr2, $deftrait),)*
             ].into_iter().collect()
         }
     };
 }
 
-// endregion
+def! {
+    types {
+        0x0000 | std :"types" :"deftype" -> def_enum! {
+            "alias"  -> Type
+            "enum"   -> map!(String, Type)
+            "struct" -> map!(String, Type)
+        }
+        0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
+        0x0002 | std :"types" :"trait-attr" -> def_struct! {
+            "attr-type" -> enum_t!(:"types" :"trait-attr-type")
+            "attr-name" -> alias_t!(:"prim" :"simple-name")
+            "val-type"  -> Type
+        }
+        0x0003 | std :"types" :"trait-attr-type" -> def_enum! {
+            "const"
+            "mut"
+            "iter"
+            "iterset"
+            "complex"
+        }
+        0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
+        0x0005 | std :"types" :"trait" -> def_struct! {
+            "attrs"  -> list!(enum_t!(:"types" :"trait-attr"))
+            "extends" -> list!(TypePtr)
+        }
+        0x0006 | std :"pattern" :"refset-item" -> def_enum! {
+            "remove" -> ObjectRef
+            "add"    -> ObjectRef
+        }
 
-// region: deftrait macros
-
-// endregion
-
-deftypes! {
-    0x0000 | std :"types" :"deftype" -> def_enum! {
-        "alias"  -> Type
-        "enum"   -> map!(String, Type)
-        "struct" -> map!(String, Type)
+        0x0008 | std :"prim" :"u8" -> def_alias! (UInt)
+        0x0009 | std :"prim" :"u16" -> def_alias! (UInt)
+        0x000A | std :"prim" :"u32" -> def_alias! (UInt)
+        0x000B | std :"prim" :"i8" -> def_alias! (Int)
+        0x000C | std :"prim" :"i16" -> def_alias! (Int)
+        0x000D | std :"prim" :"i32" -> def_alias! (Int)
+        0x000E | std :"meta" :"typeptr-std" -> def_alias! (UInt)
+        0x000F | std :"meta" :"typeptr-hash" -> def_alias! (UInt)
+        0x0010 | std :"meta" :"object-type" -> def_alias! (UInt)
+        0x0011 | std :"meta" :"object-id" -> def_alias! (UInt)
     }
-    0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
-    0x0002 | std :"types" :"trait-attr" -> def_struct! {
-        "attr-type" -> enum_t!(:"types" :"trait-attr-type")
-        "name"       -> alias_t!(:"prim" :"simple-name")
-        "val-type"   -> Type
+    traits {
+        0x8000 | std :"meta" :"object-meta" -> def_trait! {
+            Iterset "traits" -> TypePtr
+        }
+        0x8001 | std :"meta" :"name" -> def_trait! {
+            Mut "name" -> alias_t!(:"prim" :"simple-name")
+        }
+        0x8002 | std :"meta" :"unique-name" -> def_trait! {
+            ;extends ty!(:"meta" :"name"),
+        }
     }
-    0x0003 | std :"types" :"trait-attr-type" -> def_enum! {
-        "const"
-        "mut"
-        "iter"
-        "iterset"
-        "complex"
-    }
-    0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
-    0x0005 | std :"types" :"trait" -> def_struct! {
-        "attrs"  -> list!(enum_t!(:"types" :"trait-attr"))
-        "extends" -> list!(TypePtr)
-    }
-    0x0006 | std :"pattern" :"refset-item" -> def_enum! {
-        "remove" -> ObjectRef
-        "add"    -> ObjectRef
-    }
-
-    0x0008 | std :"prim" :"u8" -> def_alias! (UInt)
-    0x0009 | std :"prim" :"u16" -> def_alias! (UInt)
-    0x000A | std :"prim" :"u32" -> def_alias! (UInt)
-    0x000B | std :"prim" :"i8" -> def_alias! (Int)
-    0x000C | std :"prim" :"i16" -> def_alias! (Int)
-    0x000D | std :"prim" :"i32" -> def_alias! (Int)
-    0x000E | std :"meta" :"typeptr-std" -> def_alias! (UInt)
-    0x000F | std :"meta" :"typeptr-hash" -> def_alias! (UInt)
-    0x0010 | std :"meta" :"object-type" -> def_alias! (UInt)
-    0x0011 | std :"meta" :"object-id" -> def_alias! (UInt)
 }
-
-/*
-deftraits! {
-    0x8000 | std :"meta" :"name" -> def_trait! {
-        Mut "name" -> alias_t!(:"prim" :"simple-name")
-    } // extends ty!(...) + ty!(..)
-}
-*/
 
 pub mod codegen;
 pub mod casting;
@@ -205,6 +239,7 @@ mod test {
     #[test]
     fn test() {
         let deftypes = init_deftypes();
+        let traits = init_traits();
         assert_eq!(ptr2path(0x0001).unwrap().to_path(), "std:prim:unix-ts");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_name(), "UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_self_path(), "super::prim::UnixTs");
@@ -212,5 +247,7 @@ mod test {
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }), 0x0001);
         assert_eq!(deftypes.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
+        assert_eq!(format!("{:?}", traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
+        assert_eq!(format!("{:?}", traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
     }
 }

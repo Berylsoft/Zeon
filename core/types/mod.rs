@@ -148,6 +148,9 @@ pub trait Schema {
 }
 
 pub use crate::std::codegen::types::Deftype as DefType;
+pub mod traits {
+    pub use crate::std::codegen::{prim::SimpleName, types::{Trait, TraitAttr, TraitAttrType}};
+}
 
 #[cfg(test)]
 mod tests;

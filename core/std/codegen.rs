@@ -77,7 +77,7 @@ pub mod types {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TraitAttr {
         pub attr_type: super::types::TraitAttrType,
-        pub name: super::prim::SimpleName,
+        pub attr_name: super::prim::SimpleName,
         pub val_type: Type,
     }
     impl Schema for TraitAttr {
@@ -86,19 +86,19 @@ pub mod types {
             Value::Struct(
                 TypePtr::from_u16_unchecked(2u16),
                 vec![
-                    self.attr_type.serialize(), self.name.serialize(), Value::Type(self
-                    .val_type),
+                    self.attr_type.serialize(), self.attr_name.serialize(),
+                    Value::Type(self.val_type),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [attr_type, name, val_type]: [Value; 3usize] = val
+            let [attr_type, attr_name, val_type]: [Value; 3usize] = val
                 .into_struct()
                 .try_into()
                 .unwrap();
             Self {
                 attr_type: attr_type.deserialize_into(),
-                name: name.deserialize_into(),
+                attr_name: attr_name.deserialize_into(),
                 val_type: val_type.into_type(),
             }
         }
