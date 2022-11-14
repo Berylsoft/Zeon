@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::{types::{Type, TypePtr, DefType}, std::{ptr2path, init_deftypes}, util::{to_pascal_case, to_snake_case}};
+use zeon::{types::{Type, TypePtr, DefType}, std::{ptr2path, init, Std}, util::{to_pascal_case, to_snake_case}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
@@ -324,15 +324,15 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
 
 fn derive_file() -> TokenStream {
     use indexmap::{IndexMap, map::Entry};
-    let deftypes = init_deftypes();
+    let Std { types, .. } = init();
     let mut map = IndexMap::new();
-    for ptr in deftypes.keys() {
+    for ptr in types.keys() {
         let path = ptr2path(*ptr).unwrap().to_rust_path();
         if let Entry::Vacant(e) = map.entry(path) {
             e.insert(Vec::new());
         }
     }
-    for (ptr, dt) in deftypes {
+    for (ptr, dt) in types {
         let path = ptr2path(ptr).unwrap().to_rust_path();
         let out = derive_def(ptr, dt);
         map.get_mut(&path).unwrap().push(out);

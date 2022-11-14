@@ -42,6 +42,11 @@ impl Path {
     }
 }
 
+pub struct Std {
+    pub types: BTreeMap<u16, DefType>,
+    pub traits: BTreeMap<u16, Trait>,
+}
+
 macro_rules! list {
     ($ty:expr) => {
         types::Type::List(Box::new($ty))
@@ -158,18 +163,12 @@ macro_rules! def {
             unreachable!();
         }
 
-        pub fn init_deftypes() -> BTreeMap<u16, DefType> {
+        pub fn init() -> Std {
             use types::Type::*;
-            [
-                $(($stdptr, $deftype),)*
-            ].into_iter().collect()
-        }
-
-        pub fn init_traits() -> BTreeMap<u16, Trait> {
-            use types::Type::*;
-            [
-                $(($stdptr2, $deftrait),)*
-            ].into_iter().collect()
+            Std {
+                types: [$(($stdptr, $deftype),)*].into_iter().collect(),
+                traits: [$(($stdptr2, $deftrait),)*].into_iter().collect(),
+            }
         }
     };
 }
@@ -178,13 +177,13 @@ def! {
     types {
         0x0000 | std :"types" :"deftype" -> def_enum! {
             "alias"  -> Type
-            "enum"   -> map!(String, Type)
-            "struct" -> map!(String, Type)
+            "enum"   -> map!(String /* simple-name */, Type)
+            "struct" -> map!(String /* simple-name */, Type)
         }
         0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
         0x0002 | std :"types" :"trait-attr" -> def_struct! {
             "attr-type" -> enum_t!(:"types" :"trait-attr-type")
-            "attr-name" -> alias_t!(:"prim" :"simple-name")
+            "attr-name" -> String /* simple-name */
             "val-type"  -> Type
         }
         0x0003 | std :"types" :"trait-attr-type" -> def_enum! {
@@ -238,16 +237,15 @@ mod test {
 
     #[test]
     fn test() {
-        let deftypes = init_deftypes();
-        let traits = init_traits();
+        let std = init();
         assert_eq!(ptr2path(0x0001).unwrap().to_path(), "std:prim:unix-ts");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_name(), "UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_self_path(), "super::prim::UnixTs");
         assert_eq!(ptr2path(0x0001).unwrap().to_rust_foreign_path(), "zeon::std::codegen::prim::UnixTs");
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }), 0x0001);
-        assert_eq!(deftypes.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
-        assert_eq!(format!("{:?}", traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
-        assert_eq!(format!("{:?}", traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
+        assert_eq!(std.types.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
+        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut(()), attr_name: SimpleName("name"), val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
     }
 }
