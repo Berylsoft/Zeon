@@ -33,6 +33,7 @@ fn ptr2tokens(ptr: TypePtr) -> TokenStream {
 
 fn type2tokens(ty: Type) -> TokenStream {
     match ty {
+        Type::Unknown => quote!(Type::Unknown),
         Type::Unit => quote!(Type::Unit),
         Type::Bool => quote!(Type::Bool),
         Type::Int => quote!(Type::Int),
@@ -80,6 +81,7 @@ fn type2tokens(ty: Type) -> TokenStream {
 
 fn type2type(ty: Type) -> TokenStream {
     match ty {
+        Type::Unknown => quote!(Value),
         Type::Unit => quote!(()),
         Type::Bool => quote!(bool),
         Type::Int => quote!(i64),
@@ -118,6 +120,7 @@ fn type2type(ty: Type) -> TokenStream {
 
 fn type2de(ty: Type, v: TokenStream) -> TokenStream {
     match ty {
+        Type::Unknown => quote!(#v),
         Type::Unit => quote!(#v.into_unit()),
         Type::Bool => quote!(#v.into_bool()),
         Type::Int => quote!(#v.into_int()),
@@ -159,6 +162,7 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
 
 fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
     match ty {
+        Type::Unknown => quote!(#v),
         Type::Unit => quote!({ let _ = #v; Value::Unit }),
         Type::Bool => quote!(Value::Bool(#v)),
         Type::Int => quote!(Value::Int(#v)),

@@ -14,24 +14,25 @@ pub type EnumVariant = u8;
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
 pub enum Tag {
-    Unit        = 0x00,
-    Bool,      // 0x01
-    Int,       // 0x02
-    UInt,      // 0x03
-    Float,     // 0x04
-    String,    // 0x05
-    Bytes,     // 0x06
-    Option,    // 0x07
-    List,      // 0x08
-    Map,       // 0x09
-    Tuple,     // 0x0A
-    Alias,     // 0x0B
-    Enum,      // 0x0C
-    Struct,    // 0x0D
-    Type,      // 0x0E
-    TypePtr,   // 0x0F
-    ObjectRef, // 0x10
-    Timestamp, // 0x11
+    Unknown     = 0x00,
+    Unit,      // 0x01
+    Bool,      // 0x02
+    Int,       // 0x03
+    UInt,      // 0x04
+    Float,     // 0x05
+    String,    // 0x06
+    Bytes,     // 0x07
+    Option,    // 0x08
+    List,      // 0x09
+    Map,       // 0x0A
+    Tuple,     // 0x0B
+    Alias,     // 0x0C
+    Enum,      // 0x0D
+    Struct,    // 0x0E
+    Type,      // 0x0F
+    TypePtr,   // 0x10
+    ObjectRef, // 0x11
+    Timestamp, // 0x12
 }
 
 #[repr(u8)]
@@ -67,6 +68,8 @@ pub enum LTag {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Type {
+    Unknown,
+
     Unit,
     Bool,
     Int,

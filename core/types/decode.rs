@@ -64,6 +64,7 @@ impl<'a> Reader<'a> {
     fn ty(&mut self) -> Result<Type> {
         let tag = self.u8()?.try_into()?;
         Ok(match tag {
+            Tag::Unknown => Type::Unknown,
             Tag::Unit => Type::Unit,
             Tag::Bool => Type::Bool,
             Tag::Int => Type::Int,

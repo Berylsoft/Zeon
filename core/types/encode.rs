@@ -60,6 +60,7 @@ impl Writer {
     fn ty(&mut self, t: &Type) {
         self.u8(t.as_tag() as u8);
         match t {
+            Type::Unknown |
             Type::Unit |
             Type::Bool |
             Type::Int |

@@ -57,6 +57,7 @@ impl TypePtr {
 impl Type {
     pub const fn as_tag(&self) -> Tag {
         match self {
+            Type::Unknown   => Tag::Unknown,
             Type::Unit      => Tag::Unit,
             Type::Bool      => Tag::Bool,
             Type::Int       => Tag::Int,
