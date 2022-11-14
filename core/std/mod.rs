@@ -47,6 +47,8 @@ pub struct Std {
     pub traits: BTreeMap<u16, Trait>,
 }
 
+// region: macros
+
 macro_rules! list {
     ($ty:expr) => {
         types::Type::List(Box::new($ty))
@@ -72,13 +74,18 @@ macro_rules! alias_t {
     };
 }
 
+macro_rules! c_enum_t {
+    (:$p:literal :$n:literal) => {
+        types::Type::CEnum(ty!(:$p :$n))
+    };
+}
+
 macro_rules! enum_t {
     (:$p:literal :$n:literal) => {
         types::Type::Enum(ty!(:$p :$n))
     };
 }
 
-#[allow(unused_macros)]
 macro_rules! struct_t {
     (:$p:literal :$n:literal) => {
         types::Type::Struct(ty!(:$p :$n))
@@ -176,11 +183,13 @@ macro_rules! def {
     };
 }
 
+// endregion
+
 def! {
     types {
         0x0000 | std :"types" :"deftype" -> def_enum! {
             "alias"  -> Type
-            "c-enum"  -> list!(String /* simple-name */)
+            "c-enum" -> list!(String /* simple-name */)
             "enum"   -> map!(String /* simple-name */, Type)
             "struct" -> map!(String /* simple-name */, Type)
         }
@@ -193,34 +202,45 @@ def! {
         0x0003 | std :"types" :"trait-attr-type" -> def_c_enum! {
             "const"
             "mut"
-            "iter"
-            "iterset"
+            "iter-list"
+            "iter-set"
             "complex"
         }
         0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
         0x0005 | std :"types" :"trait" -> def_struct! {
-            "attrs"  -> list!(enum_t!(:"types" :"trait-attr"))
+            "attrs"   -> list!(enum_t!(:"types" :"trait-attr"))
             "extends" -> list!(TypePtr)
         }
-        0x0006 | std :"pattern" :"refset-item" -> def_enum! {
-            "remove" -> ObjectRef
-            "add"    -> ObjectRef
+        0x0006 | std :"meta" :"rev-type" -> def_c_enum! {
+            "const"
+            "mut"
+            "iter-list-add"
+            "iter-set-add"
+            "iter-set-remove"
+            "complex"
         }
-
-        0x0008 | std :"prim" :"u8" -> def_alias! (UInt)
-        0x0009 | std :"prim" :"u16" -> def_alias! (UInt)
-        0x000A | std :"prim" :"u32" -> def_alias! (UInt)
-        0x000B | std :"prim" :"i8" -> def_alias! (Int)
-        0x000C | std :"prim" :"i16" -> def_alias! (Int)
-        0x000D | std :"prim" :"i32" -> def_alias! (Int)
-        0x000E | std :"meta" :"typeptr-std" -> def_alias! (UInt)
-        0x000F | std :"meta" :"typeptr-hash" -> def_alias! (UInt)
-        0x0010 | std :"meta" :"object-type" -> def_alias! (UInt)
-        0x0011 | std :"meta" :"object-id" -> def_alias! (UInt)
+        0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
+            "object"     -> ObjectRef
+            "trait-type" -> TypePtr // r#trait ?
+            "attr"       -> UInt /* u8 */
+        }
+        0x0008 | std :"meta" :"rev" -> def_struct! {
+            "rev-type" -> c_enum_t!(:"meta" :"rev-type")
+            "val"      -> Unknown
+        }
+        0x0009 | std :"meta" :"commit-ptr" -> def_struct! {
+            "ts"  -> Timestamp
+            "opr" -> ObjectRef /* impl std:opr:operator */
+            "seq" -> UInt /* u32 */ // reserved for cluster randgen
+        }
+        0x000A | std :"meta" :"commit-content" -> def_struct! {
+            "ptr" -> struct_t!(:"meta" :"commit-ptr")
+            "revs" -> map!(struct_t!(:"meta" :"rev-ptr"), struct_t!(:"meta" :"rev")) // map unique?
+        }
     }
     traits {
         0x8000 | std :"meta" :"object-meta" -> def_trait! {
-            Iterset "traits" -> TypePtr
+            IterSet "traits" -> TypePtr
         }
         0x8001 | std :"meta" :"name" -> def_trait! {
             Mut "name" -> alias_t!(:"prim" :"simple-name")

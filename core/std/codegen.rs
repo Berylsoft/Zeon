@@ -116,12 +116,12 @@ pub mod types {
             }
         }
     }
-    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum TraitAttrType {
         Const,
         Mut,
-        Iter,
-        Iterset,
+        IterList,
+        IterSet,
         Complex,
     }
     impl Schema for TraitAttrType {
@@ -132,8 +132,8 @@ pub mod types {
                 match &self {
                     Self::Const => 0u8,
                     Self::Mut => 1u8,
-                    Self::Iter => 2u8,
-                    Self::Iterset => 3u8,
+                    Self::IterList => 2u8,
+                    Self::IterSet => 3u8,
                     Self::Complex => 4u8,
                 },
             )
@@ -143,8 +143,8 @@ pub mod types {
             match variant {
                 0u8 => Self::Const,
                 1u8 => Self::Mut,
-                2u8 => Self::Iter,
-                3u8 => Self::Iterset,
+                2u8 => Self::IterList,
+                3u8 => Self::IterSet,
                 4u8 => Self::Complex,
                 _ => unreachable!(),
             }
@@ -232,251 +232,151 @@ pub mod prim {
             val.0
         }
     }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct U8(pub u64);
-    impl Schema for U8 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(8u16);
-        fn serialize(self) -> Value {
-            Value::UInt(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for U8 {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<U8> for u64 {
-        fn from(val: U8) -> u64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct U16(pub u64);
-    impl Schema for U16 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
-        fn serialize(self) -> Value {
-            Value::UInt(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for U16 {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<U16> for u64 {
-        fn from(val: U16) -> u64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct U32(pub u64);
-    impl Schema for U32 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(10u16);
-        fn serialize(self) -> Value {
-            Value::UInt(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for U32 {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<U32> for u64 {
-        fn from(val: U32) -> u64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct I8(pub i64);
-    impl Schema for I8 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(11u16);
-        fn serialize(self) -> Value {
-            Value::Int(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_int())
-        }
-    }
-    impl From<i64> for I8 {
-        fn from(val: i64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<I8> for i64 {
-        fn from(val: I8) -> i64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct I16(pub i64);
-    impl Schema for I16 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(12u16);
-        fn serialize(self) -> Value {
-            Value::Int(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_int())
-        }
-    }
-    impl From<i64> for I16 {
-        fn from(val: i64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<I16> for i64 {
-        fn from(val: I16) -> i64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct I32(pub i64);
-    impl Schema for I32 {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(13u16);
-        fn serialize(self) -> Value {
-            Value::Int(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_int())
-        }
-    }
-    impl From<i64> for I32 {
-        fn from(val: i64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<I32> for i64 {
-        fn from(val: I32) -> i64 {
-            val.0
-        }
-    }
 }
-pub mod pattern {
+pub mod meta {
     use crate::{types::*, meta::{ObjectRef, Timestamp}};
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub enum RefsetItem {
-        Remove(ObjectRef),
-        Add(ObjectRef),
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum RevType {
+        Const,
+        Mut,
+        IterListAdd,
+        IterSetAdd,
+        IterSetRemove,
+        Complex,
     }
-    impl Schema for RefsetItem {
+    impl Schema for RevType {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(6u16);
         fn serialize(self) -> Value {
-            Value::Enum(
+            Value::CEnum(
                 TypePtr::from_u16_unchecked(6u16),
                 match &self {
-                    Self::Remove(_) => 0u8,
-                    Self::Add(_) => 1u8,
+                    Self::Const => 0u8,
+                    Self::Mut => 1u8,
+                    Self::IterListAdd => 2u8,
+                    Self::IterSetAdd => 3u8,
+                    Self::IterSetRemove => 4u8,
+                    Self::Complex => 5u8,
                 },
-                Box::new(
-                    match self {
-                        Self::Remove(val) => Value::ObjectRef(val),
-                        Self::Add(val) => Value::ObjectRef(val),
-                    },
-                ),
             )
         }
         fn deserialize(val: Value) -> Self {
-            let (variant, val) = val.into_enum();
+            let variant = val.into_c_enum();
             match variant {
-                0u8 => Self::Remove(val.into_objectref()),
-                1u8 => Self::Add(val.into_objectref()),
+                0u8 => Self::Const,
+                1u8 => Self::Mut,
+                2u8 => Self::IterListAdd,
+                3u8 => Self::IterSetAdd,
+                4u8 => Self::IterSetRemove,
+                5u8 => Self::Complex,
                 _ => unreachable!(),
             }
         }
     }
-}
-pub mod meta {
-    use crate::{types::*, meta::{ObjectRef, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct TypeptrStd(pub u64);
-    impl Schema for TypeptrStd {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(14u16);
+    pub struct RevPtr {
+        pub object: ObjectRef,
+        pub trait_type: TypePtr,
+        pub attr: u64,
+    }
+    impl Schema for RevPtr {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(7u16);
         fn serialize(self) -> Value {
-            Value::UInt(self.0)
+            Value::Struct(
+                TypePtr::from_u16_unchecked(7u16),
+                vec![
+                    Value::ObjectRef(self.object), Value::TypePtr(self.trait_type),
+                    Value::UInt(self.attr),
+                ],
+            )
         }
         fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for TypeptrStd {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<TypeptrStd> for u64 {
-        fn from(val: TypeptrStd) -> u64 {
-            val.0
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct TypeptrHash(pub u64);
-    impl Schema for TypeptrHash {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(15u16);
-        fn serialize(self) -> Value {
-            Value::UInt(self.0)
-        }
-        fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for TypeptrHash {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<TypeptrHash> for u64 {
-        fn from(val: TypeptrHash) -> u64 {
-            val.0
+            let [object, trait_type, attr]: [Value; 3usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
+            Self {
+                object: object.into_objectref(),
+                trait_type: trait_type.into_typeptr(),
+                attr: attr.into_uint(),
+            }
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct ObjectType(pub u64);
-    impl Schema for ObjectType {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(16u16);
+    pub struct Rev {
+        pub rev_type: super::meta::RevType,
+        pub val: Value,
+    }
+    impl Schema for Rev {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(8u16);
         fn serialize(self) -> Value {
-            Value::UInt(self.0)
+            Value::Struct(
+                TypePtr::from_u16_unchecked(8u16),
+                vec![self.rev_type.serialize(), self.val,],
+            )
         }
         fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
-        }
-    }
-    impl From<u64> for ObjectType {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
-    }
-    impl From<ObjectType> for u64 {
-        fn from(val: ObjectType) -> u64 {
-            val.0
+            let [rev_type, val]: [Value; 2usize] = val.into_struct().try_into().unwrap();
+            Self {
+                rev_type: rev_type.deserialize_into(),
+                val: val,
+            }
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct ObjectId(pub u64);
-    impl Schema for ObjectId {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(17u16);
+    pub struct CommitPtr {
+        pub ts: Timestamp,
+        pub opr: ObjectRef,
+        pub seq: u64,
+    }
+    impl Schema for CommitPtr {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
         fn serialize(self) -> Value {
-            Value::UInt(self.0)
+            Value::Struct(
+                TypePtr::from_u16_unchecked(9u16),
+                vec![
+                    Value::Timestamp(self.ts), Value::ObjectRef(self.opr),
+                    Value::UInt(self.seq),
+                ],
+            )
         }
         fn deserialize(val: Value) -> Self {
-            Self(val.into_uint())
+            let [ts, opr, seq]: [Value; 3usize] = val.into_struct().try_into().unwrap();
+            Self {
+                ts: ts.into_timestamp(),
+                opr: opr.into_objectref(),
+                seq: seq.into_uint(),
+            }
         }
     }
-    impl From<u64> for ObjectId {
-        fn from(val: u64) -> Self {
-            Self(val)
-        }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct CommitContent {
+        pub ptr: super::meta::CommitPtr,
+        pub revs: Vec<(super::meta::RevPtr, super::meta::Rev)>,
     }
-    impl From<ObjectId> for u64 {
-        fn from(val: ObjectId) -> u64 {
-            val.0
+    impl Schema for CommitContent {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(10u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(10u16),
+                vec![
+                    self.ptr.serialize(),
+                    Value::Map((Type::Struct(TypePtr::from_u16_unchecked(7u16)),
+                    Type::Struct(TypePtr::from_u16_unchecked(8u16))), self.revs
+                    .into_iter().map(| (sk, sv) | (sk.serialize(), sv.serialize()))
+                    .collect()),
+                ],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [ptr, revs]: [Value; 2usize] = val.into_struct().try_into().unwrap();
+            Self {
+                ptr: ptr.deserialize_into(),
+                revs: revs
+                    .into_map()
+                    .into_iter()
+                    .map(|(sk, sv)| (sk.deserialize_into(), sv.deserialize_into()))
+                    .collect(),
+            }
         }
     }
 }

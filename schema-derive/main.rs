@@ -256,7 +256,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let i2 = i.clone();
 
             quote!(
-                #[derive(Clone, Debug, PartialEq, Eq)]
+                #[derive(Clone, Copy, Debug, PartialEq, Eq)]
                 pub enum #name {
                     #(#names,)*
                 }
