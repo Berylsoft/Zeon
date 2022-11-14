@@ -196,6 +196,7 @@ deftraits! {
 
 pub mod codegen;
 pub mod casting;
+pub mod check;
 
 #[cfg(test)]
 mod test {

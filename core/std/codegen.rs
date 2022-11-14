@@ -212,6 +212,16 @@ pub mod prim {
             Self(val.into_uint())
         }
     }
+    impl From<u64> for UnixTs {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<UnixTs> for u64 {
+        fn from(val: UnixTs) -> u64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct SimpleName(pub String);
     impl Schema for SimpleName {
@@ -221,6 +231,16 @@ pub mod prim {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_string())
+        }
+    }
+    impl From<String> for SimpleName {
+        fn from(val: String) -> Self {
+            Self(val)
+        }
+    }
+    impl From<SimpleName> for String {
+        fn from(val: SimpleName) -> String {
+            val.0
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -234,6 +254,16 @@ pub mod prim {
             Self(val.into_uint())
         }
     }
+    impl From<u64> for U8 {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<U8> for u64 {
+        fn from(val: U8) -> u64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct U16(pub u64);
     impl Schema for U16 {
@@ -243,6 +273,16 @@ pub mod prim {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_uint())
+        }
+    }
+    impl From<u64> for U16 {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<U16> for u64 {
+        fn from(val: U16) -> u64 {
+            val.0
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -256,6 +296,16 @@ pub mod prim {
             Self(val.into_uint())
         }
     }
+    impl From<u64> for U32 {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<U32> for u64 {
+        fn from(val: U32) -> u64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct I8(pub i64);
     impl Schema for I8 {
@@ -265,6 +315,16 @@ pub mod prim {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_int())
+        }
+    }
+    impl From<i64> for I8 {
+        fn from(val: i64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<I8> for i64 {
+        fn from(val: I8) -> i64 {
+            val.0
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -278,6 +338,16 @@ pub mod prim {
             Self(val.into_int())
         }
     }
+    impl From<i64> for I16 {
+        fn from(val: i64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<I16> for i64 {
+        fn from(val: I16) -> i64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct I32(pub i64);
     impl Schema for I32 {
@@ -287,6 +357,16 @@ pub mod prim {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_int())
+        }
+    }
+    impl From<i64> for I32 {
+        fn from(val: i64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<I32> for i64 {
+        fn from(val: I32) -> i64 {
+            val.0
         }
     }
 }
@@ -337,6 +417,16 @@ pub mod meta {
             Self(val.into_uint())
         }
     }
+    impl From<u64> for TypeptrStd {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<TypeptrStd> for u64 {
+        fn from(val: TypeptrStd) -> u64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct TypeptrHash(pub u64);
     impl Schema for TypeptrHash {
@@ -346,6 +436,16 @@ pub mod meta {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_uint())
+        }
+    }
+    impl From<u64> for TypeptrHash {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<TypeptrHash> for u64 {
+        fn from(val: TypeptrHash) -> u64 {
+            val.0
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -359,6 +459,16 @@ pub mod meta {
             Self(val.into_uint())
         }
     }
+    impl From<u64> for ObjectType {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<ObjectType> for u64 {
+        fn from(val: ObjectType) -> u64 {
+            val.0
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ObjectId(pub u64);
     impl Schema for ObjectId {
@@ -368,6 +478,16 @@ pub mod meta {
         }
         fn deserialize(val: Value) -> Self {
             Self(val.into_uint())
+        }
+    }
+    impl From<u64> for ObjectId {
+        fn from(val: u64) -> Self {
+            Self(val)
+        }
+    }
+    impl From<ObjectId> for u64 {
+        fn from(val: ObjectId) -> u64 {
+            val.0
         }
     }
 }

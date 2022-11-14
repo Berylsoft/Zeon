@@ -221,6 +221,18 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                         Self(#de)
                     }
                 }
+
+                impl From<#ty> for #name {
+                    fn from(val: #ty) -> Self {
+                        Self(val)
+                    }
+                }
+
+                impl From<#name> for #ty {
+                    fn from(val: #name) -> #ty {
+                        val.0
+                    }
+                }
             )
         },
         DefType::Enum(variants) => {
