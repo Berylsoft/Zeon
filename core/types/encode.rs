@@ -138,9 +138,9 @@ impl Writer {
 
     fn with_fvar(&mut self, htag: HTag, f: u64) {
         let len = crate::util::float_find_zero(f);
-        self.with_l4(htag, len);
+        self.with_l4(htag, len as u8);
         let buf = f.to_be_bytes();
-        self.bytes(&buf[0..(len as usize)]);
+        self.bytes(&buf[0..len]);
     }
 
     fn val_seq(&mut self, s: &Vec<Value>) {

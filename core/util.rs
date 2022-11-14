@@ -78,12 +78,12 @@ pub const fn const_str_equal(lhs: &str, rhs: &str) -> bool {
     const_bytes_equal(lhs.as_bytes(), rhs.as_bytes())
 }
 
-pub fn float_find_zero(f: u64) -> u8 {
+pub fn float_find_zero(f: u64) -> usize {
     let mut buf = f.to_be_bytes();
     buf.reverse();
     for (i, b) in buf.into_iter().enumerate() {
         if b != 0 {
-            return 8 - (i as u8);
+            return 8 - i;
         }
     }
     0
