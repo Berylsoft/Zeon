@@ -1,5 +1,5 @@
 use ::std::collections::BTreeMap;
-use crate::types::{self, traits::*, *};
+use crate::{types::{self, traits::*, *}, meta};
 
 #[derive(Clone, Debug)]
 pub struct Path {
@@ -63,7 +63,7 @@ macro_rules! map {
 
 macro_rules! ty {
     (:$p:literal :$n:literal) => {{
-        const TY: types::TypePtr = types::TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
+        const TY: meta::TypePtr = meta::TypePtr::from_u16_unchecked(const_path2ptr(Path { path: $p, name: $n }));
         TY
     }};
 }

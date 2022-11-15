@@ -7,7 +7,7 @@
     clippy::redundant_field_names,
 )]
 pub mod types {
-    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
+    use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Deftype {
         Alias(Type),
@@ -190,7 +190,7 @@ pub mod types {
     }
 }
 pub mod prim {
-    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
+    use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UnixTs(pub u64);
     impl Schema for UnixTs {
@@ -235,7 +235,7 @@ pub mod prim {
     }
 }
 pub mod meta {
-    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
+    use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum RevType {
         Const,

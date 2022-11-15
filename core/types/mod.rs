@@ -1,13 +1,4 @@
-use crate::meta::{ObjectPtr, Timestamp};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TypePtr {
-    Std(StdPtr),
-    Hash([u8; 7]),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct StdPtr(u16);
+use crate::meta::{Timestamp, ObjectPtr, TypePtr};
 
 pub type EnumVariant = u8;
 
@@ -156,7 +147,7 @@ pub trait Schema {
 
 pub use crate::std::codegen::types::Deftype as DefType;
 pub mod traits {
-    pub use crate::std::codegen::{prim::SimpleName, types::{Trait, TraitAttr, TraitAttrType}};
+    pub use crate::std::codegen::types::{Trait, TraitAttr, TraitAttrType};
 }
 
 #[cfg(test)]

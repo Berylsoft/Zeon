@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use zeon::{types::{Type, TypePtr, DefType}, std::{ptr2path, init, Std}, util::{to_pascal_case, to_snake_case}};
+use zeon::{types::{Type, DefType}, meta::TypePtr, std::{ptr2path, init, Std}, util::{to_pascal_case, to_snake_case}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
@@ -392,7 +392,7 @@ fn derive_file() -> TokenStream {
         let path = ident(path);
         quote!(
             pub mod #path {
-                use crate::{types::*, meta::{ObjectPtr, Timestamp}};
+                use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
                 #(#outs)*
             }
         )
