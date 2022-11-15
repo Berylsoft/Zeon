@@ -32,7 +32,7 @@ impl Timestamp {
 
 macros::bin_struct! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub struct ObjectRef {
+    pub struct ObjectPtr {
         pub ot: u16,
         pub oid: u64,
     }
