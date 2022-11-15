@@ -4,6 +4,7 @@
     clippy::unit_arg,
     clippy::let_unit_value,
     clippy::redundant_closure,
+    clippy::redundant_field_names,
 )]
 pub mod types {
     use crate::{types::*, meta::{ObjectPtr, Timestamp}};

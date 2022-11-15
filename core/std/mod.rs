@@ -269,7 +269,7 @@ mod test {
         assert_eq!(path2ptr(Path { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(const_path2ptr(Path { path: "prim", name: "unix-ts" }), 0x0001);
         assert_eq!(std.types.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
-        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Iterset, attr_name: "traits", val_type: TypePtr }], extends: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: IterSet, attr_name: "traits", val_type: TypePtr }], extends: [] }"#);
         assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut, attr_name: "name", val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
     }
 }
