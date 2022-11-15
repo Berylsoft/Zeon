@@ -70,7 +70,7 @@ impl Writer {
             Type::Bytes |
             Type::Type |
             Type::TypePtr |
-            Type::ObjectRef |
+            Type::ObjectPtr |
             Type::Timestamp => {},
 
             Type::Option(t) |
@@ -261,8 +261,8 @@ impl Writer {
                 self.typeptr(ptr);
 
             }
-            Value::ObjectRef(ObjectRef { ot, oid }) => {
-                self.with_ltag(htag, LTag::ObjectRef);
+            Value::ObjectPtr(ObjectPtr { ot, oid }) => {
+                self.with_ltag(htag, LTag::ObjectPtr);
                 self.u16(*ot);
                 self.u64(*oid);
 

@@ -220,7 +220,7 @@ def! {
             "complex"
         }
         0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
-            "object"     -> ObjectRef
+            "object"     -> ObjectPtr
             "trait-type" -> TypePtr // r#trait ?
             "attr"       -> UInt /* u8 */
         }
@@ -230,7 +230,7 @@ def! {
         }
         0x0009 | std :"meta" :"commit-ptr" -> def_struct! {
             "ts"  -> Timestamp
-            "opr" -> ObjectRef /* impl std:opr:operator */
+            "opr" -> ObjectPtr /* impl std:opr:operator */
             "seq" -> UInt /* u32 */ // reserved for cluster randgen
         }
         0x000A | std :"meta" :"commit-content" -> def_struct! {

@@ -43,7 +43,7 @@ fn type2tokens(ty: Type) -> TokenStream {
         Type::Bytes => quote!(Type::Bytes),
         Type::Type => quote!(Type::Type),
         Type::TypePtr => quote!(Type::TypePtr),
-        Type::ObjectRef => quote!(Type::ObjectRef),
+        Type::ObjectPtr => quote!(Type::ObjectPtr),
         Type::Timestamp => quote!(Type::Timestamp),
 
         Type::Option(sty) => {
@@ -95,7 +95,7 @@ fn type2type(ty: Type) -> TokenStream {
         Type::Bytes => quote!(Vec<u8>),
         Type::Type => quote!(Type),
         Type::TypePtr => quote!(TypePtr),
-        Type::ObjectRef => quote!(ObjectRef),
+        Type::ObjectPtr => quote!(ObjectPtr),
         Type::Timestamp => quote!(Timestamp),
 
         Type::Option(sty) => {
@@ -134,8 +134,8 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         Type::String => quote!(#v.into_string()),
         Type::Bytes => quote!(#v.into_bytes()),
         Type::Type => quote!(#v.into_type()),
-        Type::TypePtr => quote!(#v.into_typeptr()),
-        Type::ObjectRef => quote!(#v.into_objectref()),
+        Type::TypePtr => quote!(#v.into_type_ptr()),
+        Type::ObjectPtr => quote!(#v.into_object_ptr()),
         Type::Timestamp => quote!(#v.into_timestamp()),
 
         Type::Option(sty) => {
@@ -178,7 +178,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::Bytes => quote!(Value::Bytes(#v)),
         Type::Type => quote!(Value::Type(#v)),
         Type::TypePtr => quote!(Value::TypePtr(#v)),
-        Type::ObjectRef => quote!(Value::ObjectRef(#v)),
+        Type::ObjectPtr => quote!(Value::ObjectPtr(#v)),
         Type::Timestamp => quote!(Value::Timestamp(#v)),
 
         Type::Option(sty) => {
@@ -391,7 +391,7 @@ fn derive_file() -> TokenStream {
         let path = ident(path);
         quote!(
             pub mod #path {
-                use crate::{types::*, meta::{ObjectRef, Timestamp}};
+                use crate::{types::*, meta::{ObjectPtr, Timestamp}};
                 #(#outs)*
             }
         )

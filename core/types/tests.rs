@@ -50,7 +50,7 @@ fn test() {
             Value::Enum(TypePtr::from_u16(0x00aa), 163, Box::new(Value::UInt(12))),
             Value::Type(Type::List(Box::new(Type::List(Box::new(Type::Struct(TypePtr::from_u16(0xfe50))))))),
             Value::TypePtr(TypePtr::Hash(hex!("fedcba98765432"))),
-            Value::ObjectRef(ObjectRef { ot: 0x0123, oid: 0x0123456789abcdef }),
+            Value::ObjectPtr(ObjectPtr { ot: 0x0123, oid: 0x0123456789abcdef }),
             Value::Timestamp(Timestamp { secs: 0x000000002920d7f6, nanos: 0x3161fcd4 }),
             Value::Option(Type::Tuple(vec![Type::Int, Type::Unit, Type::Unknown]), Box::new(Some(Value::Tuple(vec![Value::Int(9), Value::Unit, Value::Bool(true)])))),
         ]),

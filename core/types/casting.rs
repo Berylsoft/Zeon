@@ -1,4 +1,3 @@
-use crate::meta::ObjectRef;
 use super::*;
 
 impl StdPtr {
@@ -75,7 +74,7 @@ impl Type {
             Type::Struct(_) => Tag::Struct,
             Type::Type      => Tag::Type,
             Type::TypePtr   => Tag::TypePtr,
-            Type::ObjectRef => Tag::ObjectRef,
+            Type::ObjectPtr => Tag::ObjectPtr,
             Type::Timestamp => Tag::Timestamp,
         }
     }
@@ -101,7 +100,7 @@ impl Value {
             Value::Struct(_, _)  => Tag::Struct,
             Value::Type(_)       => Tag::Type,
             Value::TypePtr(_)    => Tag::TypePtr,
-            Value::ObjectRef(_)  => Tag::ObjectRef,
+            Value::ObjectPtr(_)  => Tag::ObjectPtr,
             Value::Timestamp(_)  => Tag::Timestamp,
         }
     }
@@ -126,7 +125,7 @@ impl Value {
             Value::Alias(_, _)   |
             Value::Type(_)       |
             Value::TypePtr(_)    |
-            Value::ObjectRef(_)  |
+            Value::ObjectPtr(_)  |
             Value::Timestamp(_)  => HTag::L4,
         }
     }
@@ -150,7 +149,7 @@ impl Value {
             Value::Struct(ptr, _) => Type::Struct(*ptr),
             Value::Type(_) => Type::Type,
             Value::TypePtr(_) => Type::TypePtr,
-            Value::ObjectRef(_) => Type::ObjectRef,
+            Value::ObjectPtr(_) => Type::ObjectPtr,
             Value::Timestamp(_) => Type::Timestamp,
         }
     }
@@ -285,15 +284,15 @@ impl Value {
         unreachable!()
     }
 
-    pub fn into_typeptr(self) -> TypePtr {
+    pub fn into_type_ptr(self) -> TypePtr {
         if let Value::TypePtr(v) = self {
             return v;
         }
         unreachable!()
     }
 
-    pub fn into_objectref(self) -> ObjectRef {
-        if let Value::ObjectRef(v) = self {
+    pub fn into_object_ptr(self) -> ObjectPtr {
+        if let Value::ObjectPtr(v) = self {
             return v;
         }
         unreachable!()

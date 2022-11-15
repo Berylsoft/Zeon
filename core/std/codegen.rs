@@ -6,7 +6,7 @@
     clippy::redundant_closure,
 )]
 pub mod types {
-    use crate::{types::*, meta::{ObjectRef, Timestamp}};
+    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum Deftype {
         Alias(Type),
@@ -182,14 +182,14 @@ pub mod types {
                 extends: extends
                     .into_list()
                     .into_iter()
-                    .map(|sv| sv.into_typeptr())
+                    .map(|sv| sv.into_type_ptr())
                     .collect(),
             }
         }
     }
 }
 pub mod prim {
-    use crate::{types::*, meta::{ObjectRef, Timestamp}};
+    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UnixTs(pub u64);
     impl Schema for UnixTs {
@@ -234,7 +234,7 @@ pub mod prim {
     }
 }
 pub mod meta {
-    use crate::{types::*, meta::{ObjectRef, Timestamp}};
+    use crate::{types::*, meta::{ObjectPtr, Timestamp}};
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub enum RevType {
         Const,
@@ -274,7 +274,7 @@ pub mod meta {
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct RevPtr {
-        pub object: ObjectRef,
+        pub object: ObjectPtr,
         pub trait_type: TypePtr,
         pub attr: u64,
     }
@@ -284,7 +284,7 @@ pub mod meta {
             Value::Struct(
                 TypePtr::from_u16_unchecked(7u16),
                 vec![
-                    Value::ObjectRef(self.object), Value::TypePtr(self.trait_type),
+                    Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
                     Value::UInt(self.attr),
                 ],
             )
@@ -295,8 +295,8 @@ pub mod meta {
                 .try_into()
                 .unwrap();
             Self {
-                object: object.into_objectref(),
-                trait_type: trait_type.into_typeptr(),
+                object: object.into_object_ptr(),
+                trait_type: trait_type.into_type_ptr(),
                 attr: attr.into_uint(),
             }
         }
@@ -325,7 +325,7 @@ pub mod meta {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct CommitPtr {
         pub ts: Timestamp,
-        pub opr: ObjectRef,
+        pub opr: ObjectPtr,
         pub seq: u64,
     }
     impl Schema for CommitPtr {
@@ -334,7 +334,7 @@ pub mod meta {
             Value::Struct(
                 TypePtr::from_u16_unchecked(9u16),
                 vec![
-                    Value::Timestamp(self.ts), Value::ObjectRef(self.opr),
+                    Value::Timestamp(self.ts), Value::ObjectPtr(self.opr),
                     Value::UInt(self.seq),
                 ],
             )
@@ -343,7 +343,7 @@ pub mod meta {
             let [ts, opr, seq]: [Value; 3usize] = val.into_struct().try_into().unwrap();
             Self {
                 ts: ts.into_timestamp(),
-                opr: opr.into_objectref(),
+                opr: opr.into_object_ptr(),
                 seq: seq.into_uint(),
             }
         }

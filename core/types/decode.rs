@@ -74,7 +74,7 @@ impl<'a> Reader<'a> {
             Tag::Bytes => Type::Bytes,
             Tag::Type => Type::Type,
             Tag::TypePtr => Type::TypePtr,
-            Tag::ObjectRef => Type::ObjectRef,
+            Tag::ObjectPtr => Type::ObjectPtr,
             Tag::Timestamp => Type::Timestamp,
 
             Tag::Option => {
@@ -199,10 +199,10 @@ impl<'a> Reader<'a> {
                         let ptr = self.typeptr()?;
                         Value::TypePtr(ptr)
                     },
-                    LTag::ObjectRef => {
+                    LTag::ObjectPtr => {
                         let ot = self.u16()?;
                         let oid = self.u64()?;
-                        Value::ObjectRef(ObjectRef { ot, oid })
+                        Value::ObjectPtr(ObjectPtr { ot, oid })
                     },
                     LTag::Timestamp => {
                         let secs = self.i64()?;
