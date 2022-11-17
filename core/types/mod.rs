@@ -159,10 +159,7 @@ pub trait Schema {
     fn deserialize(val: Value) -> Self;
 }
 
-pub use crate::std::codegen::types::Deftype as DefType;
-pub mod traits {
-    pub use crate::std::codegen::types::{Trait, TraitAttr, TraitAttrType};
-}
+pub use crate::std::codegen::types::{Deftype as DefType, Trait, TraitAttr, TraitAttrType};
 
 #[cfg(test)]
 mod tests;

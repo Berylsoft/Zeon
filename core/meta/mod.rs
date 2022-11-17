@@ -47,21 +47,6 @@ pub enum TypePtr {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StdPtr(u16);
 
-pub use crate::std::codegen::meta::RevType;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RevPtr {
-    pub object: ObjectPtr,
-    pub trait_type: TypePtr,
-    pub attr: u8,
-    pub rev_type: RevType,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CommitPtr {
-    pub ts: Timestamp,
-    pub opr: ObjectPtr,
-    pub seq: u16,
-}
+pub use crate::std::codegen::meta::{RevType, RevPtr, CommitPtr};
 
 mod casting;

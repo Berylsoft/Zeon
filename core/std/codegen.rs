@@ -277,7 +277,8 @@ pub mod meta {
     pub struct RevPtr {
         pub object: ObjectPtr,
         pub trait_type: TypePtr,
-        pub attr: u64,
+        pub attr: u8,
+        pub rev_type: super::meta::RevType,
     }
     impl Schema for RevPtr {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(7u16);
@@ -286,40 +287,20 @@ pub mod meta {
                 TypePtr::from_u16_unchecked(7u16),
                 vec![
                     Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
-                    Value::UInt(self.attr),
+                    Value::UInt8(self.attr), self.rev_type.serialize(),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [object, trait_type, attr]: [Value; 3usize] = val
+            let [object, trait_type, attr, rev_type]: [Value; 4usize] = val
                 .into_struct()
                 .try_into()
                 .unwrap();
             Self {
                 object: object.into_object_ptr(),
                 trait_type: trait_type.into_type_ptr(),
-                attr: attr.into_uint(),
-            }
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct Rev {
-        pub rev_type: super::meta::RevType,
-        pub val: Value,
-    }
-    impl Schema for Rev {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(8u16);
-        fn serialize(self) -> Value {
-            Value::Struct(
-                TypePtr::from_u16_unchecked(8u16),
-                vec![self.rev_type.serialize(), self.val,],
-            )
-        }
-        fn deserialize(val: Value) -> Self {
-            let [rev_type, val]: [Value; 2usize] = val.into_struct().try_into().unwrap();
-            Self {
+                attr: attr.into_uint8(),
                 rev_type: rev_type.deserialize_into(),
-                val: val,
             }
         }
     }
@@ -327,16 +308,16 @@ pub mod meta {
     pub struct CommitPtr {
         pub ts: Timestamp,
         pub opr: ObjectPtr,
-        pub seq: u64,
+        pub seq: u16,
     }
     impl Schema for CommitPtr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(8u16);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(9u16),
+                TypePtr::from_u16_unchecked(8u16),
                 vec![
                     Value::Timestamp(self.ts), Value::ObjectPtr(self.opr),
-                    Value::UInt(self.seq),
+                    Value::UInt16(self.seq),
                 ],
             )
         }
@@ -345,37 +326,41 @@ pub mod meta {
             Self {
                 ts: ts.into_timestamp(),
                 opr: opr.into_object_ptr(),
-                seq: seq.into_uint(),
+                seq: seq.into_uint16(),
             }
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct CommitContent {
+    pub struct Commit {
         pub ptr: super::meta::CommitPtr,
-        pub revs: Vec<(super::meta::RevPtr, super::meta::Rev)>,
+        pub hash: Vec<u8>,
+        pub revs: Vec<(super::meta::RevPtr, Value)>,
     }
-    impl Schema for CommitContent {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(10u16);
+    impl Schema for Commit {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(10u16),
+                TypePtr::from_u16_unchecked(9u16),
                 vec![
-                    self.ptr.serialize(),
+                    self.ptr.serialize(), Value::Bytes(self.hash),
                     Value::Map((Type::Struct(TypePtr::from_u16_unchecked(7u16)),
-                    Type::Struct(TypePtr::from_u16_unchecked(8u16))), self.revs
-                    .into_iter().map(| (sk, sv) | (sk.serialize(), sv.serialize()))
-                    .collect()),
+                    Type::Unknown), self.revs.into_iter().map(| (sk, sv) | (sk
+                    .serialize(), sv)).collect()),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [ptr, revs]: [Value; 2usize] = val.into_struct().try_into().unwrap();
+            let [ptr, hash, revs]: [Value; 3usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
             Self {
                 ptr: ptr.deserialize_into(),
+                hash: hash.into_bytes(),
                 revs: revs
                     .into_map()
                     .into_iter()
-                    .map(|(sk, sv)| (sk.deserialize_into(), sv.deserialize_into()))
+                    .map(|(sk, sv)| (sk.deserialize_into(), sv))
                     .collect(),
             }
         }

@@ -1,7 +1,7 @@
 #![allow(unused_macros)]
 
 use ::std::collections::BTreeMap;
-use crate::{types::{self, traits::*, *}, meta};
+use crate::{types::{self, *}, meta};
 
 #[derive(Clone, Debug)]
 pub struct Path {
@@ -221,24 +221,22 @@ def! {
             "iter-set-remove"
             "complex"
         }
-        // 0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
-        //     "object"     -> ObjectPtr
-        //     "trait-type" -> TypePtr // r#trait ?
-        //     "attr"       -> UInt /* u8 */
-        // }
-        // 0x0008 | std :"meta" :"rev" -> def_struct! {
-        //     "rev-type" -> c_enum_t!(:"meta" :"rev-type")
-        //     "val"      -> Unknown
-        // }
-        // 0x0009 | std :"meta" :"commit-ptr" -> def_struct! {
-        //     "ts"  -> Timestamp
-        //     "opr" -> ObjectPtr /* impl std:opr:operator */
-        //     "seq" -> UInt /* u32 */ // reserved for cluster randgen
-        // }
-        // 0x000A | std :"meta" :"commit-content" -> def_struct! {
-        //     "ptr" -> struct_t!(:"meta" :"commit-ptr")
-        //     "revs" -> map!(struct_t!(:"meta" :"rev-ptr"), struct_t!(:"meta" :"rev")) // map unique?
-        // }
+        0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
+            "object"     -> ObjectPtr
+            "trait-type" -> TypePtr
+            "attr"       -> UInt8
+            "rev-type"   -> c_enum_t!(:"meta" :"rev-type")
+        }
+        0x0008 | std :"meta" :"commit-ptr" -> def_struct! {
+            "ts"  -> Timestamp
+            "opr" -> ObjectPtr /* impl std:opr:operator */
+            "seq" -> UInt16 // reserved for cluster randgen
+        }
+        0x0009 | std :"meta" :"commit" -> def_struct! {
+            "ptr" -> struct_t!(:"meta" :"commit-ptr")
+            "hash" -> Bytes
+            "revs" -> map!(struct_t!(:"meta" :"rev-ptr"), Unknown) // map unique?
+        }
     }
     traits {
         0x8000 | std :"meta" :"object-meta" -> def_trait! {
