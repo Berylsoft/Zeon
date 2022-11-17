@@ -23,6 +23,9 @@ impl Type {
             Type::TypePtr   => Tag::TypePtr,
             Type::ObjectPtr => Tag::ObjectPtr,
             Type::Timestamp => Tag::Timestamp,
+            Type::UInt8     => Tag::UInt8,
+            Type::UInt16    => Tag::UInt16,
+            Type::UInt32    => Tag::UInt32,
         }
     }
 }
@@ -49,6 +52,9 @@ impl Value {
             Value::TypePtr(_)    => Tag::TypePtr,
             Value::ObjectPtr(_)  => Tag::ObjectPtr,
             Value::Timestamp(_)  => Tag::Timestamp,
+            Value::UInt8(_)      => Tag::UInt8,
+            Value::UInt16(_)     => Tag::UInt16,
+            Value::UInt32(_)     => Tag::UInt32,
         }
     }
 
@@ -73,7 +79,10 @@ impl Value {
             Value::Type(_)       |
             Value::TypePtr(_)    |
             Value::ObjectPtr(_)  |
-            Value::Timestamp(_)  => HTag::L4,
+            Value::Timestamp(_)  |
+            Value::UInt8(_)      |
+            Value::UInt16(_)     |
+            Value::UInt32(_)     => HTag::L4,
         }
     }
 
@@ -98,6 +107,9 @@ impl Value {
             Value::TypePtr(_) => Type::TypePtr,
             Value::ObjectPtr(_) => Type::ObjectPtr,
             Value::Timestamp(_) => Type::Timestamp,
+            Value::UInt8(_) => Type::UInt8,
+            Value::UInt16(_) => Type::UInt16,
+            Value::UInt32(_) => Type::UInt32,
         }
     }
 }
@@ -247,6 +259,27 @@ impl Value {
 
     pub fn into_timestamp(self) -> Timestamp {
         if let Value::Timestamp(v) = self {
+            return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_uint8(self) -> u8 {
+        if let Value::UInt8(v) = self {
+            return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_uint16(self) -> u16 {
+        if let Value::UInt16(v) = self {
+            return v;
+        }
+        unreachable!()
+    }
+
+    pub fn into_uint32(self) -> u32 {
+        if let Value::UInt32(v) = self {
             return v;
         }
         unreachable!()

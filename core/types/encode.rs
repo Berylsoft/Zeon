@@ -71,7 +71,10 @@ impl Writer {
             Type::Type |
             Type::TypePtr |
             Type::ObjectPtr |
-            Type::Timestamp => {},
+            Type::Timestamp |
+            Type::UInt8 |
+            Type::UInt16 |
+            Type::UInt32 => {},
 
             Type::Option(t) |
             Type::List(t) => {
@@ -113,7 +116,7 @@ impl Writer {
     }
 
     fn with_uvar(&mut self, htag: HTag, u: u64) {
-        if u < EXT8 as u64 {
+        if u < (EXT8 as u64) {
             self.with_l4(htag, u as u8);
         } else if u <= (u8::MAX as u64) {
             self.with_l4(htag, EXT8);
@@ -255,24 +258,36 @@ impl Writer {
                 self.with_ltag(htag, LTag::Type);
                 self.ty(t);
 
-            }
+            },
             Value::TypePtr(ptr) => {
                 self.with_ltag(htag, LTag::TypePtr);
                 self.typeptr(ptr);
 
-            }
+            },
             Value::ObjectPtr(ObjectPtr { ot, oid }) => {
                 self.with_ltag(htag, LTag::ObjectPtr);
                 self.u16(*ot);
                 self.u64(*oid);
 
-            }
+            },
             Value::Timestamp(Timestamp { secs, nanos }) => {
                 self.with_ltag(htag, LTag::Timestamp);
                 self.i64(*secs);
                 self.u32(*nanos);
 
-            }
+            },
+            Value::UInt8(u) => {
+                self.u8(*u);
+
+            },
+            Value::UInt16(u) => {
+                self.u16(*u);
+
+            },
+            Value::UInt32(u) => {
+                self.u32(*u);
+
+            },
         }
     }
 }

@@ -76,6 +76,9 @@ impl<'a> Reader<'a> {
             Tag::TypePtr => Type::TypePtr,
             Tag::ObjectPtr => Type::ObjectPtr,
             Tag::Timestamp => Type::Timestamp,
+            Tag::UInt8 => Type::UInt8,
+            Tag::UInt16 => Type::UInt16,
+            Tag::UInt32 => Type::UInt32,
 
             Tag::Option => {
                 let t = self.ty()?;
@@ -208,7 +211,19 @@ impl<'a> Reader<'a> {
                         let secs = self.i64()?;
                         let nanos = self.u32()?;
                         Value::Timestamp(Timestamp { secs, nanos })
-                    }
+                    },
+                    LTag::UInt8 => {
+                        let u = self.u8()?;
+                        Value::UInt8(u)
+                    },
+                    LTag::UInt16 => {
+                        let u = self.u16()?;
+                        Value::UInt16(u)
+                    },
+                    LTag::UInt32 => {
+                        let u = self.u32()?;
+                        Value::UInt32(u)
+                    },
                 }
             },
             HTag::Int => {

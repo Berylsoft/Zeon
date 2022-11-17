@@ -45,6 +45,9 @@ fn type2tokens(ty: Type) -> TokenStream {
         Type::TypePtr => quote!(Type::TypePtr),
         Type::ObjectPtr => quote!(Type::ObjectPtr),
         Type::Timestamp => quote!(Type::Timestamp),
+        Type::UInt8 => quote!(Type::UInt8),
+        Type::UInt16 => quote!(Type::UInt16),
+        Type::UInt32 => quote!(Type::UInt32),
 
         Type::Option(sty) => {
             let sty = type2tokens(*sty);
@@ -97,6 +100,9 @@ fn type2type(ty: Type) -> TokenStream {
         Type::TypePtr => quote!(TypePtr),
         Type::ObjectPtr => quote!(ObjectPtr),
         Type::Timestamp => quote!(Timestamp),
+        Type::UInt8 => quote!(u8),
+        Type::UInt16 => quote!(u16),
+        Type::UInt32 => quote!(u32),
 
         Type::Option(sty) => {
             let sty = type2type(*sty);
@@ -137,6 +143,9 @@ fn type2de(ty: Type, v: TokenStream) -> TokenStream {
         Type::TypePtr => quote!(#v.into_type_ptr()),
         Type::ObjectPtr => quote!(#v.into_object_ptr()),
         Type::Timestamp => quote!(#v.into_timestamp()),
+        Type::UInt8 => quote!(#v.into_uint8()),
+        Type::UInt16 => quote!(#v.into_uint16()),
+        Type::UInt32 => quote!(#v.into_uint32()),
 
         Type::Option(sty) => {
             let sty = type2de(*sty, quote!(sv));
@@ -180,6 +189,9 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::TypePtr => quote!(Value::TypePtr(#v)),
         Type::ObjectPtr => quote!(Value::ObjectPtr(#v)),
         Type::Timestamp => quote!(Value::Timestamp(#v)),
+        Type::UInt8 => quote!(Value::UInt8(#v)),
+        Type::UInt16 => quote!(Value::UInt16(#v)),
+        Type::UInt32 => quote!(Value::UInt32(#v)),
 
         Type::Option(sty) => {
             let sty_ty = type2tokens(*sty.clone());

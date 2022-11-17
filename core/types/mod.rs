@@ -25,6 +25,9 @@ pub enum Tag {
     TypePtr,   // 0x11
     ObjectPtr, // 0x12
     Timestamp, // 0x13
+    UInt8,     // 0x14
+    UInt16,    // 0x15
+    UInt32,    // 0x16
 }
 
 #[repr(u8)]
@@ -57,6 +60,9 @@ pub enum LTag {
     TypePtr,   // 0x7
     ObjectPtr, // 0x8
     Timestamp, // 0x9
+    UInt8,     // 0xA
+    UInt16,    // 0xB
+    UInt32,    // 0xC
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,6 +92,10 @@ pub enum Type {
     TypePtr,
     ObjectPtr,
     Timestamp,
+
+    UInt8,
+    UInt16,
+    UInt32,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -113,6 +123,10 @@ pub enum Value {
     TypePtr(TypePtr),
     ObjectPtr(ObjectPtr),
     Timestamp(Timestamp),
+
+    UInt8(u8),
+    UInt16(u16),
+    UInt32(u32),
 }
 
 mod casting;
