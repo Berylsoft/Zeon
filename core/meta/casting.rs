@@ -106,7 +106,8 @@ impl From<RevType> for u8 {
     }
 }
 
-// TODO macro
+// region: TODO macro
+
 impl RevPtr {
     pub const SIZE: usize = ObjectPtr::SIZE + TypePtr::SIZE + 1 + 1;
 
@@ -168,6 +169,8 @@ impl CommitPtr {
         buf
     }
 }
+
+// endregion
 
 #[cfg(test)]
 mod test {

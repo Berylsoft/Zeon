@@ -11,7 +11,7 @@ name = "zeon"
 path = "lib.rs"
 
 [dependencies]
-tiny-keccak = { version = "2", features = ["shake"] }
+tiny-keccak = { version = "2", features = ["sha3", "shake"] }
 num_enum = "0.5"
 macros = { git = "https://github.com/Berylsoft/rust-macros" }
 
