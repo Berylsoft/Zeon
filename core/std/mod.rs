@@ -25,34 +25,49 @@ macro_rules! map {
     };
 }
 
-macro_rules! ref_std {
+macro_rules! ref_type {
     (:$p:literal :$n:literal) => {{
-        const TY: meta::TypePtr = meta::TypePtr::from_u16_unchecked(const_path2ptr(StdPath { path: $p, name: $n }));
-        TY
+        const P: meta::TypePtr = {
+            let p = const_path2ptr(StdPath { path: $p, name: $n });
+            assert!(p < 0x8000);
+            meta::TypePtr::from_u16_unchecked(p)
+        };
+        P
+    }};
+}
+
+macro_rules! ref_trait {
+    (:$p:literal :$n:literal) => {{
+        const P: meta::TypePtr = {
+            let p = const_path2ptr(StdPath { path: $p, name: $n });
+            assert!(p >= 0x8000);
+            meta::TypePtr::from_u16_unchecked(p)
+        };
+        P
     }};
 }
 
 macro_rules! ref_alias {
     (:$p:literal :$n:literal) => {
-        Alias(ref_std!(:$p :$n))
+        Alias(ref_type!(:$p :$n))
     };
 }
 
 macro_rules! ref_c_enum {
     (:$p:literal :$n:literal) => {
-        CEnum(ref_std!(:$p :$n))
+        CEnum(ref_type!(:$p :$n))
     };
 }
 
 macro_rules! ref_enum {
     (:$p:literal :$n:literal) => {
-        Enum(ref_std!(:$p :$n))
+        Enum(ref_type!(:$p :$n))
     };
 }
 
 macro_rules! ref_struct {
     (:$p:literal :$n:literal) => {
-        Struct(ref_std!(:$p :$n))
+        Struct(ref_type!(:$p :$n))
     };
 }
 
@@ -208,7 +223,7 @@ def_std! {
             Mut "name" -> ref_alias!(:"prim" :"simple-name")
         }
         0x8002 | std :"meta" :"unique-name" -> def_trait! {
-            ;extends ref_std!(:"meta" :"name"),
+            ;extends ref_trait!(:"meta" :"name"),
         }
     }
 }
