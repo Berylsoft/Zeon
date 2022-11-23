@@ -13,6 +13,12 @@ pub struct Std {
 
 // region: macros
 
+macro_rules! option {
+    ($ty:expr) => {
+        Option(Box::new($ty))
+    };
+}
+
 macro_rules! list {
     ($ty:expr) => {
         List(Box::new($ty))
@@ -22,6 +28,12 @@ macro_rules! list {
 macro_rules! map {
     ($tyk:expr, $tyv:expr) => {
         Map(Box::new($tyk), Box::new($tyv))
+    };
+}
+
+macro_rules! tuple {
+    ($($tys:expr)*) => {
+        Tuple(vec![$($tys)*])
     };
 }
 
@@ -45,6 +57,15 @@ macro_rules! ref_trait {
         };
         P
     }};
+}
+
+macro_rules! ref_may_trait {
+    () => {
+        None
+    };
+    (:$p:literal :$n:literal) => {
+        Some(ref_trait!(:$p :$n))
+    };
 }
 
 macro_rules! ref_alias {
@@ -102,14 +123,28 @@ macro_rules! def_struct {
 }
 
 macro_rules! def_trait {
-    ($($attr_type:ident $attr_name:literal -> $val_type:expr)* $(;extends $($extend:expr,)*)*) => {
+    (
+        $(commit { $($commit_attr_type:ident $commit_attr_name:literal -> $commit_val_type:expr)* })*
+        $(state { $($state_attr_name:literal -> $state_val_type:expr)* })*
+        $(extends { $($extend:expr)* })*
+        $(validator { $($validator_name:literal <- $validator_attr_name:literal [ $validator_parent:expr ])* })*
+    ) => {
         Trait {
-            attrs: vec![$(TraitAttr {
-                attr_type: TraitAttrType::$attr_type,
-                attr_name: $attr_name.to_owned(),
-                val_type: $val_type,
-            })*],
-            extends: vec![$($($extend,)*)*]
+            commit_attrs: vec![$($(CommitAttr {
+                attr_type: CommitAttrType::$commit_attr_type,
+                attr_name: $commit_attr_name.to_owned(),
+                val_type: $commit_val_type,
+            })*)*],
+            state_attrs: vec![$($(StateAttr {
+                attr_name: $state_attr_name.to_owned(),
+                val_type: $state_val_type,
+            })*)*],
+            extends: vec![$($($extend,)*)*],
+            validators: vec![$($(Validator {
+                name: $validator_name.to_owned(),
+                attr_name: $validator_attr_name.to_owned(),
+                parent: $validator_parent,
+            })*)*],
         }
     };
 }
@@ -173,12 +208,12 @@ def_std! {
             "struct" -> map!(String /* simple-name */, Type)
         }
         0x0001 | std :"prim" :"unix-ts" -> def_alias! (UInt)
-        0x0002 | std :"types" :"trait-attr" -> def_struct! {
-            "attr-type" -> ref_c_enum!(:"types" :"trait-attr-type")
+        0x0002 | std :"types" :"commit-attr" -> def_struct! {
+            "attr-type" -> ref_c_enum!(:"types" :"commit-attr-type")
             "attr-name" -> String /* simple-name */
             "val-type"  -> Type
         }
-        0x0003 | std :"types" :"trait-attr-type" -> def_c_enum! {
+        0x0003 | std :"types" :"commit-attr-type" -> def_c_enum! {
             "const"
             "mut"
             "iter-list"
@@ -187,8 +222,10 @@ def_std! {
         }
         0x0004 | std :"prim" :"simple-name" -> def_alias! (String)
         0x0005 | std :"types" :"trait" -> def_struct! {
-            "attrs"   -> list!(ref_enum!(:"types" :"trait-attr"))
-            "extends" -> list!(TypePtr)
+            "commit-attrs" -> list!(ref_enum!(:"types" :"commit-attr"))
+            "state-attrs"  -> list!(ref_enum!(:"types" :"state-attr"))
+            "extends"      -> list!(TypePtr)
+            "validators"   -> list!(ref_struct!(:"types" :"validator"))
         }
         0x0006 | std :"meta" :"rev-type" -> def_c_enum! {
             "const"
@@ -214,16 +251,31 @@ def_std! {
             "hash" -> Bytes
             "revs" -> map!(ref_struct!(:"meta" :"rev-ptr"), Unknown) // map unique?
         }
+        0x000A | std :"types" :"state-attr" -> def_struct! {
+            "attr-name" -> String /* simple-name */
+            "val-type"  -> Type
+        }
+        0x000B | std :"types" :"validator" -> def_struct! {
+            "name"      -> String
+            "attr-name" -> String /* simple-name */
+            "parent"    -> option!(TypePtr)
+        }
     }
     traits {
         0x8000 | std :"meta" :"object-meta" -> def_trait! {
-            IterSet "traits" -> TypePtr
+            commit {
+                IterSet "traits" -> TypePtr
+            }
         }
         0x8001 | std :"meta" :"name" -> def_trait! {
-            Mut "name" -> ref_alias!(:"prim" :"simple-name")
+            commit {
+                Mut "name" -> ref_alias!(:"prim" :"simple-name")
+            }
         }
         0x8002 | std :"meta" :"unique-name" -> def_trait! {
-            ;extends ref_trait!(:"meta" :"name"),
+            extends {
+                ref_trait!(:"meta" :"name")
+            }
         }
     }
 }
@@ -246,7 +298,7 @@ mod test {
         assert_eq!(path2ptr(StdPath { path: "prim", name: "unix-ts" }).unwrap(), 0x0001);
         assert_eq!(const_path2ptr(StdPath { path: "prim", name: "unix-ts" }), 0x0001);
         assert_eq!(std.types.get(&0x0001).unwrap().clone(), DefType::Alias(Type::UInt));
-        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: IterSet, attr_name: "traits", val_type: TypePtr }], extends: [] }"#);
-        assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { attrs: [TraitAttr { attr_type: Mut, attr_name: "name", val_type: Alias(Std(StdPtr(4))) }], extends: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8000).unwrap().clone()), r#"Trait { commit_attrs: [CommitAttr { attr_type: IterSet, attr_name: "traits", val_type: TypePtr }], state_attrs: [], extends: [], validators: [] }"#);
+        assert_eq!(format!("{:?}", std.traits.get(&0x8001).unwrap().clone()), r#"Trait { commit_attrs: [CommitAttr { attr_type: Mut, attr_name: "name", val_type: Alias(Std(StdPtr(4))) }], state_attrs: [], extends: [], validators: [] }"#);
     }
 }

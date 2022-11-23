@@ -89,12 +89,12 @@ pub mod types {
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct TraitAttr {
-        pub attr_type: super::types::TraitAttrType,
+    pub struct CommitAttr {
+        pub attr_type: super::types::CommitAttrType,
         pub attr_name: String,
         pub val_type: Type,
     }
-    impl Schema for TraitAttr {
+    impl Schema for CommitAttr {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(2u16);
         fn serialize(self) -> Value {
             Value::Struct(
@@ -118,14 +118,14 @@ pub mod types {
         }
     }
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum TraitAttrType {
+    pub enum CommitAttrType {
         Const,
         Mut,
         IterList,
         IterSet,
         Complex,
     }
-    impl Schema for TraitAttrType {
+    impl Schema for CommitAttrType {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(3u16);
         fn serialize(self) -> Value {
             Value::CEnum(
@@ -153,8 +153,10 @@ pub mod types {
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Trait {
-        pub attrs: Vec<super::types::TraitAttr>,
+        pub commit_attrs: Vec<super::types::CommitAttr>,
+        pub state_attrs: Vec<super::types::StateAttr>,
         pub extends: Vec<TypePtr>,
+        pub validators: Vec<super::types::Validator>,
     }
     impl Schema for Trait {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(5u16);
@@ -162,20 +164,29 @@ pub mod types {
             Value::Struct(
                 TypePtr::from_u16_unchecked(5u16),
                 vec![
-                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(2u16)), self.attrs
-                    .into_iter().map(| sv | sv.serialize()).collect()),
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(2u16)), self
+                    .commit_attrs.into_iter().map(| sv | sv.serialize()).collect()),
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(10u16)), self
+                    .state_attrs.into_iter().map(| sv | sv.serialize()).collect()),
                     Value::List(Type::TypePtr, self.extends.into_iter().map(| sv |
                     Value::TypePtr(sv)).collect()),
+                    Value::List(Type::Struct(TypePtr::from_u16_unchecked(11u16)), self
+                    .validators.into_iter().map(| sv | sv.serialize()).collect()),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [attrs, extends]: [Value; 2usize] = val
+            let [commit_attrs, state_attrs, extends, validators]: [Value; 4usize] = val
                 .into_struct()
                 .try_into()
                 .unwrap();
             Self {
-                attrs: attrs
+                commit_attrs: commit_attrs
+                    .into_list()
+                    .into_iter()
+                    .map(|sv| sv.deserialize_into())
+                    .collect(),
+                state_attrs: state_attrs
                     .into_list()
                     .into_iter()
                     .map(|sv| sv.deserialize_into())
@@ -185,6 +196,65 @@ pub mod types {
                     .into_iter()
                     .map(|sv| sv.into_type_ptr())
                     .collect(),
+                validators: validators
+                    .into_list()
+                    .into_iter()
+                    .map(|sv| sv.deserialize_into())
+                    .collect(),
+            }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct StateAttr {
+        pub attr_name: String,
+        pub val_type: Type,
+    }
+    impl Schema for StateAttr {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(10u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(10u16),
+                vec![Value::String(self.attr_name), Value::Type(self.val_type),],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [attr_name, val_type]: [Value; 2usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
+            Self {
+                attr_name: attr_name.into_string(),
+                val_type: val_type.into_type(),
+            }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct Validator {
+        pub name: String,
+        pub attr_name: String,
+        pub parent: Option<TypePtr>,
+    }
+    impl Schema for Validator {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(11u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(11u16),
+                vec![
+                    Value::String(self.name), Value::String(self.attr_name),
+                    Value::Option(Type::TypePtr, Box::new(self.parent.map(| sv |
+                    Value::TypePtr(sv)))),
+                ],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [name, attr_name, parent]: [Value; 3usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
+            Self {
+                name: name.into_string(),
+                attr_name: attr_name.into_string(),
+                parent: parent.into_option().map(|sv| sv.into_type_ptr()),
             }
         }
     }

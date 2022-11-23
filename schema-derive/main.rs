@@ -196,7 +196,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
         Type::Option(sty) => {
             let sty_ty = type2tokens(*sty.clone());
             let sty = type2ser(*sty, quote!(sv));
-            quote!(Value::Option(#sty_ty, #v.map(|sv| #sty)))
+            quote!(Value::Option(#sty_ty, Box::new(#v.map(|sv| #sty))))
         },
         Type::List(sty) => {
             let sty_ty = type2tokens(*sty.clone());
