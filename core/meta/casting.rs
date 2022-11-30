@@ -53,6 +53,7 @@ impl StdPtr {
     }
 }
 
+/*
 impl TypePtr {
     pub const SIZE: usize = 8;
 
@@ -78,6 +79,7 @@ impl TypePtr {
         buf
     }
 }
+*/
 
 impl From<u8> for RevType {
     fn from(b: u8) -> Self {
@@ -108,50 +110,62 @@ impl From<RevType> for u8 {
 
 // region: TODO macro
 
-impl RevPtr {
-    pub const SIZE: usize = ObjectPtr::SIZE + TypePtr::SIZE + 1 + 1;
+macro_rules! from_num {
+    ($field:ident, $numtype:ty, $offset:expr, $raw:expr) => {
+        let _size: usize = std::mem::size_of::<$numtype>();
+        let $field = <$numtype>::from_be_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
+        $offset += _size;
+    };
+}
 
-    pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
-        let mut offset: usize = 0;
-        let object = ObjectPtr::from_bytes(raw[offset..(offset + ObjectPtr::SIZE)].try_into().unwrap());
-        offset += ObjectPtr::SIZE;
-        let trait_type = TypePtr::from_bytes(raw[offset..(offset + TypePtr::SIZE)].try_into().unwrap());
-        offset += TypePtr::SIZE;
-        let [attr]: [u8; 1] = raw[offset..offset + 1].try_into().unwrap();
-        offset += 1;
-        let [rev_type]: [u8; 1] = raw[offset..offset + 1].try_into().unwrap();
-        offset += 1;
-        assert_eq!(offset, Self::SIZE);
-        Self { object, trait_type, attr, rev_type: rev_type.into() }
-    }
+macro_rules! from_fixed {
+    ($field:ident, $size:expr, $offset:expr, $raw:expr) => {
+        let _size: usize = $size;
+        let $field = $raw[$offset..($offset + _size)].try_into().unwrap();
+        $offset += _size;
+    };
+}
 
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
-        let mut offset: usize = 0;
-        buf[offset..ObjectPtr::SIZE].copy_from_slice(&self.object.to_bytes());
-        offset += ObjectPtr::SIZE;
-        buf[offset..offset + TypePtr::SIZE].copy_from_slice(&self.trait_type.to_bytes());
-        offset += TypePtr::SIZE;
-        buf[offset..offset + 1].copy_from_slice(&[self.attr]);
-        offset += 1;
-        buf[offset..offset + 1].copy_from_slice(&[self.rev_type.into()]);
-        offset += 1;
-        assert_eq!(offset, Self::SIZE);
-        buf
-    }
+macro_rules! from_struct {
+    ($field:ident, $ty:ty, $offset:expr, $raw:expr) => {
+        let _size: usize = <$ty>::SIZE;
+        let $field = <$ty>::from_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
+        $offset += _size;
+    };
+}
+
+macro_rules! to_num {
+    ($field:ident, $numtype:ty, $offset:expr, $buf:expr, $self:expr) => {
+        let _size: usize = std::mem::size_of::<$numtype>();
+        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_be_bytes().as_slice());
+        $offset += _size;
+    };
+}
+
+macro_rules! to_fixed {
+    ($field:ident, $size:expr, $offset:expr, $buf:expr, $self:expr) => {
+        let _size: usize = $size;
+        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.as_slice());
+        $offset += _size;
+    };
+}
+
+macro_rules! to_struct {
+    ($field:ident, $ty:ty, $offset:expr, $buf:expr, $self:expr) => {
+        let _size: usize = <$ty>::SIZE;
+        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_bytes().as_slice());
+        $offset += _size;
+    };
 }
 
 impl CommitPtr {
     pub const SIZE: usize = Timestamp::SIZE + ObjectPtr::SIZE + 2;
-    
+
     pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
         let mut offset: usize = 0;
-        let ts = Timestamp::from_bytes(raw[offset..(offset + Timestamp::SIZE)].try_into().unwrap());
-        offset += Timestamp::SIZE;
-        let opr = ObjectPtr::from_bytes(raw[offset..(offset + ObjectPtr::SIZE)].try_into().unwrap());
-        offset += ObjectPtr::SIZE;
-        let seq = u16::from_be_bytes(raw[offset..offset + 2].try_into().unwrap());
-        offset += 2;
+        from_struct!(ts, Timestamp, offset, raw);
+        from_struct!(opr, ObjectPtr, offset, raw);
+        from_num!(seq, u16, offset, raw);
         assert_eq!(offset, Self::SIZE);
         Self { ts, opr, seq }
     }
@@ -159,12 +173,32 @@ impl CommitPtr {
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut buf = [0u8; Self::SIZE];
         let mut offset: usize = 0;
-        buf[offset..Timestamp::SIZE].copy_from_slice(&self.ts.to_bytes());
-        offset += Timestamp::SIZE;
-        buf[offset..offset + ObjectPtr::SIZE].copy_from_slice(&self.opr.to_bytes());
-        offset += ObjectPtr::SIZE;
-        buf[offset..offset + 2].copy_from_slice(&self.seq.to_be_bytes());
-        offset += 2;
+        to_struct!(ts, Timestamp, offset, buf, self);
+        to_struct!(opr, ObjectPtr, offset, buf, self);
+        to_num!(seq, u16, offset, buf, self);
+        assert_eq!(offset, Self::SIZE);
+        buf
+    }
+}
+
+impl CommitIndexItem {
+    pub const SIZE: usize = CommitPtr::SIZE + 8 + 32;
+
+    pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
+        let mut offset: usize = 0;
+        from_struct!(ptr, CommitPtr, offset, raw);
+        from_num!(len, u64, offset, raw);
+        from_fixed!(hash, 32, offset, raw);
+        assert_eq!(offset, Self::SIZE);
+        Self { ptr, len, hash }
+    }
+
+    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+        let mut buf = [0u8; Self::SIZE];
+        let mut offset: usize = 0;
+        to_struct!(ptr, CommitPtr, offset, buf, self);
+        to_num!(len, u64, offset, buf, self);
+        to_fixed!(hash, 32, offset, buf, self);
         assert_eq!(offset, Self::SIZE);
         buf
     }
@@ -174,11 +208,54 @@ impl CommitPtr {
 
 #[cfg(test)]
 mod test {
+    use hex_literal::hex;
     use super::*;
 
     #[test]
     fn test() {
-        assert_eq!(RevPtr::SIZE, 20);
         assert_eq!(CommitPtr::SIZE, 24);
+        assert_eq!(CommitIndexItem::SIZE, 64);
+
+        macro_rules! case {
+            ($ty:ty, $v:expr, $exp:expr) => {{
+                println!("{:?}", &$v);
+                let buf = $v.clone().to_bytes();
+                println!("{}", hex::encode($exp.as_slice()));
+                println!("{}", hex::encode(&buf));
+                assert_eq!(&buf, $exp.as_slice());
+                let v2 = <$ty>::from_bytes(buf);
+                assert_eq!($v, v2);
+            }};
+        }
+
+        let ptr = CommitPtr {
+            ts: Timestamp { secs: 0x2937b5bf, nanos: 0x05b242d8 },
+            opr: ObjectPtr { ot: 0x1234, oid: 0xabcdef00 },
+            seq: 0x5678,
+        };
+
+        let index = CommitIndexItem {
+            ptr: ptr.clone(),
+            len: 0,
+            hash: crate::util::shake256(&[]),
+        };
+    
+        case!(
+            CommitPtr,
+            ptr,
+            hex!("
+            000000002937b5bf05b242d8123400000000abcdef005678
+            ")
+        );
+
+        case!(
+            CommitIndexItem,
+            index,
+            hex!("
+            000000002937b5bf05b242d8123400000000abcdef005678
+            0000000000000000
+            46b9dd2b0ba88d13233b3feb743eeb243fcd52ea62b81b82b50c27646ed5762f
+            ")
+        );
     }
 }

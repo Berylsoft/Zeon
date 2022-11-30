@@ -235,11 +235,12 @@ def_std! {
             "iter-set-remove"
             "complex"
         }
-        0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
+        0x0007 | std :"meta" :"rev" -> def_struct! {
             "object"     -> ObjectPtr
             "trait-type" -> TypePtr
             "attr"       -> UInt8
             "rev-type"   -> ref_c_enum!(:"meta" :"rev-type")
+            "value"      -> Unknown
         }
         0x0008 | std :"meta" :"commit-ptr" -> def_struct! {
             "ts"  -> Timestamp
@@ -248,8 +249,7 @@ def_std! {
         }
         0x0009 | std :"meta" :"commit" -> def_struct! {
             "ptr" -> ref_struct!(:"meta" :"commit-ptr")
-            "hash" -> Bytes
-            "revs" -> map!(ref_struct!(:"meta" :"rev-ptr"), Unknown) // map unique?
+            "revs" -> list!(ref_struct!(:"meta" :"rev"))
         }
         0x000A | std :"types" :"state-attr" -> def_struct! {
             "attr-name" -> String /* simple-name */

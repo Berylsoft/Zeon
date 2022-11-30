@@ -47,6 +47,13 @@ pub enum TypePtr {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StdPtr(u16);
 
-pub use crate::std::codegen::meta::{RevType, RevPtr, CommitPtr};
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CommitIndexItem {
+    pub ptr: CommitPtr,
+    pub len: u64,
+    pub hash: [u8; 32],
+}
+
+pub use crate::std::codegen::meta::{RevType, Rev, CommitPtr};
 
 mod casting;
