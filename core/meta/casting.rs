@@ -110,79 +110,7 @@ impl From<RevType> for u8 {
     }
 }
 
-macro_rules! bin_struct_complex {
-    {
-        $struct_name:ident { $($field:ident -> $_ftyk:tt($_ftyv:tt))* }
-    } => {
-        macro_rules! size {
-            (Number($ty:ty)) => {
-                std::mem::size_of::<$ty>()
-            };
-            (Bytes($size:literal)) => {
-                $size
-            };
-            (Struct($ty:ty)) => {
-                <$ty>::SIZE
-            };
-        }
-
-        impl $struct_name {
-            pub const SIZE: usize = $(size!($_ftyk($_ftyv))+)*0;
-
-            pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
-                let mut offset: usize = 0;
-                $(
-                    let $field = {
-                        let _size = size!($_ftyk($_ftyv));
-                        let _slice = raw[offset..(offset + _size)].try_into().unwrap();
-                        macro_rules! from {
-                            (Number($ty:ty)) => {
-                                <$ty>::from_be_bytes(_slice)
-                            };
-                            (Bytes($size:literal)) => {
-                                _slice
-                            };
-                            (Struct($ty:ty)) => {
-                                <$ty>::from_bytes(_slice)
-                            };
-                        }
-                        let _val = from!($_ftyk($_ftyv));
-                        offset += _size;
-                        _val
-                    };
-                )*
-                assert_eq!(offset, Self::SIZE);
-                Self { $($field,)* }
-            }
-
-            pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-                let mut buf = [0u8; Self::SIZE];
-                let mut offset: usize = 0;
-                $({
-                    let _size = size!($_ftyk($_ftyv));
-                    macro_rules! to {
-                        (Number($ty:ty)) => {
-                            self.$field.to_be_bytes()
-                        };
-                        (Bytes($size:literal)) => {
-                            self.$field
-                        };
-                        (Struct($ty:ty)) => {
-                            self.$field.to_bytes()
-                        };
-                    }
-                    let _slice = to!($_ftyk($_ftyv));
-                    (&mut buf[offset..(offset + _size)]).copy_from_slice(&_slice);
-                    offset += _size;
-                })*
-                assert_eq!(offset, Self::SIZE);
-                buf
-            }
-        }
-    };
-}
-
-bin_struct_complex! {
+macros::bin_struct_complex_impl! {
     CommitPtr {
         ts  -> Struct(Timestamp)
         opr -> Struct(ObjectPtr)
@@ -190,7 +118,7 @@ bin_struct_complex! {
     }
 }
 
-bin_struct_complex! {
+macros::bin_struct_complex_impl! {
     CommitIndexItem {
         ptr  -> Struct(CommitPtr)
         len  -> Number(u64)
