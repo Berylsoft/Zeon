@@ -110,103 +110,93 @@ impl From<RevType> for u8 {
     }
 }
 
-// region: TODO macro
+macro_rules! bin_struct_complex {
+    {
+        $struct_name:ident { $($field:ident -> $_ftyk:tt($_ftyv:tt))* }
+    } => {
+        macro_rules! size {
+            (Number($ty:ty)) => {
+                std::mem::size_of::<$ty>()
+            };
+            (Bytes($size:literal)) => {
+                $size
+            };
+            (Struct($ty:ty)) => {
+                <$ty>::SIZE
+            };
+        }
 
-macro_rules! def_from {
-    ($offset:expr, $raw:expr) => {
-        macro_rules! from {
-            (num $field:ident $numtype:ty) => {
-                let _size: usize = std::mem::size_of::<$numtype>();
-                let $field = <$numtype>::from_be_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
-                $offset += _size;
-            };
-            (fixed $field:ident $size:expr) => {
-                let _size: usize = $size;
-                let $field = $raw[$offset..($offset + _size)].try_into().unwrap();
-                $offset += _size;
-            };
-            (struct $field:ident $ty:ty) => {
-                let _size: usize = <$ty>::SIZE;
-                let $field = <$ty>::from_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
-                $offset += _size;
-            };
+        impl $struct_name {
+            pub const SIZE: usize = $(size!($_ftyk($_ftyv))+)*0;
+
+            pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
+                let mut offset: usize = 0;
+                $(
+                    let $field = {
+                        let _size = size!($_ftyk($_ftyv));
+                        let _slice = raw[offset..(offset + _size)].try_into().unwrap();
+                        macro_rules! from {
+                            (Number($ty:ty)) => {
+                                <$ty>::from_be_bytes(_slice)
+                            };
+                            (Bytes($size:literal)) => {
+                                _slice
+                            };
+                            (Struct($ty:ty)) => {
+                                <$ty>::from_bytes(_slice)
+                            };
+                        }
+                        let _val = from!($_ftyk($_ftyv));
+                        offset += _size;
+                        _val
+                    };
+                )*
+                assert_eq!(offset, Self::SIZE);
+                Self { $($field,)* }
+            }
+
+            pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+                let mut buf = [0u8; Self::SIZE];
+                let mut offset: usize = 0;
+                $({
+                    let _size = size!($_ftyk($_ftyv));
+                    macro_rules! to {
+                        (Number($ty:ty)) => {
+                            self.$field.to_be_bytes()
+                        };
+                        (Bytes($size:literal)) => {
+                            self.$field
+                        };
+                        (Struct($ty:ty)) => {
+                            self.$field.to_bytes()
+                        };
+                    }
+                    let _slice = to!($_ftyk($_ftyv));
+                    (&mut buf[offset..(offset + _size)]).copy_from_slice(&_slice);
+                    offset += _size;
+                })*
+                assert_eq!(offset, Self::SIZE);
+                buf
+            }
         }
     };
 }
 
-macro_rules! def_to {
-    ($offset:expr, $buf:expr, $self:expr) => {
-        macro_rules! to{
-            (num $field:ident $numtype:ty) => {
-                let _size: usize = std::mem::size_of::<$numtype>();
-                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_be_bytes().as_slice());
-                $offset += _size;
-            };
-            (fixed $field:ident $size:expr) => {
-                let _size: usize = $size;
-                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.as_slice());
-                $offset += _size;
-            };
-            (struct $field:ident $ty:ty) => {
-                let _size: usize = <$ty>::SIZE;
-                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_bytes().as_slice());
-                $offset += _size;
-            };
-        }
-    };
-}
-
-impl CommitPtr {
-    pub const SIZE: usize = Timestamp::SIZE + ObjectPtr::SIZE + 2;
-
-    pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
-        let mut offset: usize = 0;
-        def_from!(offset, raw);
-        from!(struct ts Timestamp);
-        from!(struct opr ObjectPtr);
-        from!(num seq u16);
-        assert_eq!(offset, Self::SIZE);
-        Self { ts, opr, seq }
-    }
-
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
-        let mut offset: usize = 0;
-        def_to!(offset, buf, self);
-        to!(struct ts Timestamp);
-        to!(struct opr ObjectPtr);
-        to!(num seq u16);
-        assert_eq!(offset, Self::SIZE);
-        buf
+bin_struct_complex! {
+    CommitPtr {
+        ts  -> Struct(Timestamp)
+        opr -> Struct(ObjectPtr)
+        seq -> Number(u16)
     }
 }
 
-impl CommitIndexItem {
-    pub const SIZE: usize = CommitPtr::SIZE + 8 + 32;
-
-    pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
-        let mut offset: usize = 0;
-        def_from!(offset, raw);
-        from!(struct ptr CommitPtr);
-        from!(num len u64);
-        from!(fixed hash 32);
-        assert_eq!(offset, Self::SIZE);
-        Self { ptr, len, hash }
-    }
-
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
-        let mut offset: usize = 0;
-        def_to!(offset, buf, self);
-        to!(struct ptr CommitPtr);
-        to!(num len u64);
-        to!(fixed hash 32);
-        assert_eq!(offset, Self::SIZE);
-        buf
+bin_struct_complex! {
+    CommitIndexItem {
+        ptr  -> Struct(CommitPtr)
+        len  -> Number(u64)
+        hash -> Bytes(32)
     }
 }
-
-// endregion
 
 #[cfg(test)]
 mod test {
