@@ -1,3 +1,5 @@
+#![allow(unused_macros)]
+
 use super::*;
 
 impl TypePtr {
@@ -110,51 +112,47 @@ impl From<RevType> for u8 {
 
 // region: TODO macro
 
-macro_rules! from_num {
-    ($field:ident, $numtype:ty, $offset:expr, $raw:expr) => {
-        let _size: usize = std::mem::size_of::<$numtype>();
-        let $field = <$numtype>::from_be_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
-        $offset += _size;
+macro_rules! def_from {
+    ($offset:expr, $raw:expr) => {
+        macro_rules! from {
+            (num $field:ident $numtype:ty) => {
+                let _size: usize = std::mem::size_of::<$numtype>();
+                let $field = <$numtype>::from_be_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
+                $offset += _size;
+            };
+            (fixed $field:ident $size:expr) => {
+                let _size: usize = $size;
+                let $field = $raw[$offset..($offset + _size)].try_into().unwrap();
+                $offset += _size;
+            };
+            (struct $field:ident $ty:ty) => {
+                let _size: usize = <$ty>::SIZE;
+                let $field = <$ty>::from_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
+                $offset += _size;
+            };
+        }
     };
 }
 
-macro_rules! from_fixed {
-    ($field:ident, $size:expr, $offset:expr, $raw:expr) => {
-        let _size: usize = $size;
-        let $field = $raw[$offset..($offset + _size)].try_into().unwrap();
-        $offset += _size;
-    };
-}
-
-macro_rules! from_struct {
-    ($field:ident, $ty:ty, $offset:expr, $raw:expr) => {
-        let _size: usize = <$ty>::SIZE;
-        let $field = <$ty>::from_bytes($raw[$offset..($offset + _size)].try_into().unwrap());
-        $offset += _size;
-    };
-}
-
-macro_rules! to_num {
-    ($field:ident, $numtype:ty, $offset:expr, $buf:expr, $self:expr) => {
-        let _size: usize = std::mem::size_of::<$numtype>();
-        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_be_bytes().as_slice());
-        $offset += _size;
-    };
-}
-
-macro_rules! to_fixed {
-    ($field:ident, $size:expr, $offset:expr, $buf:expr, $self:expr) => {
-        let _size: usize = $size;
-        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.as_slice());
-        $offset += _size;
-    };
-}
-
-macro_rules! to_struct {
-    ($field:ident, $ty:ty, $offset:expr, $buf:expr, $self:expr) => {
-        let _size: usize = <$ty>::SIZE;
-        (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_bytes().as_slice());
-        $offset += _size;
+macro_rules! def_to {
+    ($offset:expr, $buf:expr, $self:expr) => {
+        macro_rules! to{
+            (num $field:ident $numtype:ty) => {
+                let _size: usize = std::mem::size_of::<$numtype>();
+                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_be_bytes().as_slice());
+                $offset += _size;
+            };
+            (fixed $field:ident $size:expr) => {
+                let _size: usize = $size;
+                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.as_slice());
+                $offset += _size;
+            };
+            (struct $field:ident $ty:ty) => {
+                let _size: usize = <$ty>::SIZE;
+                (&mut $buf[$offset..($offset + _size)]).copy_from_slice($self.$field.to_bytes().as_slice());
+                $offset += _size;
+            };
+        }
     };
 }
 
@@ -163,9 +161,10 @@ impl CommitPtr {
 
     pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
         let mut offset: usize = 0;
-        from_struct!(ts, Timestamp, offset, raw);
-        from_struct!(opr, ObjectPtr, offset, raw);
-        from_num!(seq, u16, offset, raw);
+        def_from!(offset, raw);
+        from!(struct ts Timestamp);
+        from!(struct opr ObjectPtr);
+        from!(num seq u16);
         assert_eq!(offset, Self::SIZE);
         Self { ts, opr, seq }
     }
@@ -173,9 +172,10 @@ impl CommitPtr {
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut buf = [0u8; Self::SIZE];
         let mut offset: usize = 0;
-        to_struct!(ts, Timestamp, offset, buf, self);
-        to_struct!(opr, ObjectPtr, offset, buf, self);
-        to_num!(seq, u16, offset, buf, self);
+        def_to!(offset, buf, self);
+        to!(struct ts Timestamp);
+        to!(struct opr ObjectPtr);
+        to!(num seq u16);
         assert_eq!(offset, Self::SIZE);
         buf
     }
@@ -186,9 +186,10 @@ impl CommitIndexItem {
 
     pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
         let mut offset: usize = 0;
-        from_struct!(ptr, CommitPtr, offset, raw);
-        from_num!(len, u64, offset, raw);
-        from_fixed!(hash, 32, offset, raw);
+        def_from!(offset, raw);
+        from!(struct ptr CommitPtr);
+        from!(num len u64);
+        from!(fixed hash 32);
         assert_eq!(offset, Self::SIZE);
         Self { ptr, len, hash }
     }
@@ -196,9 +197,10 @@ impl CommitIndexItem {
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut buf = [0u8; Self::SIZE];
         let mut offset: usize = 0;
-        to_struct!(ptr, CommitPtr, offset, buf, self);
-        to_num!(len, u64, offset, buf, self);
-        to_fixed!(hash, 32, offset, buf, self);
+        def_to!(offset, buf, self);
+        to!(struct ptr CommitPtr);
+        to!(num len u64);
+        to!(fixed hash 32);
         assert_eq!(offset, Self::SIZE);
         buf
     }
