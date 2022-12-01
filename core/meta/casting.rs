@@ -1,4 +1,5 @@
 #![allow(unused_macros)]
+
 use super::*;
 
 impl Timestamp {
