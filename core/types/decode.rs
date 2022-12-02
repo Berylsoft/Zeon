@@ -142,7 +142,7 @@ impl<'a> Reader<'a> {
     }
 
     fn with_szvar(&mut self, l4: u8) -> Result<usize> {
-        Ok(self.with_uvar(l4)?.try_into()?)
+        Ok(self.with_uvar(l4)?.try_into().expect("FATAL: u64 length to usize error"))
     }
 
     fn with_fvar(&mut self, l4: u8) -> Result<u64> {

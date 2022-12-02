@@ -141,7 +141,7 @@ macros::error_enum! {
     DecodeError {} convert {
         Io => std::io::Error,
         Utf8 => std::string::FromUtf8Error,
-        Size => std::num::TryFromIntError,
+        VarientExceed => std::num::TryFromIntError,
         Tag => num_enum::TryFromPrimitiveError<Tag>,
         HTag => num_enum::TryFromPrimitiveError<HTag>,
         LTag => num_enum::TryFromPrimitiveError<LTag>,
