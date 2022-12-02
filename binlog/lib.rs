@@ -4,7 +4,7 @@ pub const BS_IDENT_INDEX:   u32 = 0x42650100;
 pub const BS_IDENT_CONTENT: u32 = 0x42650200;
 
 use std::{io, marker::Unpin};
-use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt, AsyncSeek};
+use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt};
 use zeon::{std::codegen::meta::Commit, types::{Value, DecodeError, Schema}, meta::{CommitPtr, CommitIndexItem}};
 
 type Hash = [u8; 32];
@@ -85,17 +85,17 @@ macro_rules! iter_try {
 }
 
 macro_rules! check {
-    ($l:expr, $r:expr, $err:expr) => {
+    ($l:expr, $r:expr, $varient:ident) => {
         if $l != $r {
-            return Err($err);
+            return Err(Error::$varient($l, $r));
         }
     };
 }
 
 macro_rules! iter_check {
-    ($l:expr, $r:expr, $err:expr) => {
+    ($l:expr, $r:expr, $varient:ident) => {
         if $l != $r {
-            return Some(Err($err));
+            return Some(Err(Error::$varient($l, $r)));
         }
     };
 }
@@ -126,18 +126,19 @@ impl<F: AsyncWrite + Unpin> Writer<F> {
     }
 }
 
-pub struct Reader<F: AsyncRead + AsyncSeek + Unpin> {
+pub struct Reader<F: AsyncRead + Unpin> {
     index: F,
     content: F,
 }
 
-impl<F: AsyncRead + AsyncSeek + Unpin> Reader<F> {
+impl<F: AsyncRead + Unpin> Reader<F> {
     pub async fn init(mut index: F, mut content: F) -> Result<Reader<F>> {
         let mut ident = [0u8; 4];
         index_try!(index.read_exact(&mut ident));
-        check!(ident, BS_IDENT_INDEX.to_be_bytes(), Error::Ident(BS_IDENT_INDEX, u32::from_be_bytes(ident)));
+        check!(u32::from_be_bytes(ident), BS_IDENT_INDEX, Ident);
+        let mut ident = [0u8; 4];
         content_try!(content.read_exact(&mut ident));
-        check!(ident, BS_IDENT_CONTENT.to_be_bytes(), Error::Ident(BS_IDENT_CONTENT, u32::from_be_bytes(ident)));
+        check!(u32::from_be_bytes(ident), BS_IDENT_CONTENT, Ident);
         Ok(Reader { index, content })
     }
 
@@ -149,9 +150,9 @@ impl<F: AsyncRead + AsyncSeek + Unpin> Reader<F> {
         let mut content = vec![0u8; len];
         content_try_iter!(self.content.read_exact(&mut content));
         let _hash = zeon::util::shake256(&content);
-        iter_check!(hash, _hash, Error::Hash(hash, _hash));
-        let commit = Commit::deserialize(iter_try!(Value::decode(&mut content)));
-        iter_check!(ptr, commit.ptr, Error::Ptr(ptr, commit.ptr.clone()));
+        iter_check!(hash, _hash, Hash);
+        let commit = Commit::deserialize(iter_try!(Value::decode(&content)));
+        iter_check!(ptr, commit.ptr, Ptr);
         Some(Ok((commit, hash)))
     }
 }

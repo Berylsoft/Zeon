@@ -1,15 +1,15 @@
 use super::*;
-use std::io::{Read, Cursor};
+use std::io::Read;
 
 type Result<T> = DecodeResult<T>;
 
 struct Reader<'a> {
-    bytes: Cursor<&'a [u8]>,
+    bytes: &'a [u8],
 }
 
 impl<'a> Reader<'a> {
-    fn new(buf: &'a [u8]) -> Reader<'a> {
-        Reader { bytes: Cursor::new(buf) }
+    fn new(bytes: &'a [u8]) -> Reader<'a> {
+        Reader { bytes }
     }
 
     #[inline]
