@@ -33,4 +33,3 @@ pub struct CommitIndexItem {
 pub use crate::std::codegen::meta::{RevType, Rev, CommitPtr, Commit};
 
 mod casting;
-pub mod binlog;
