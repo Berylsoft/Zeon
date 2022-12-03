@@ -2,33 +2,6 @@ use std::{io, marker::Unpin};
 use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt};
 use zeon::{std::codegen::meta::Commit, meta::{CommitPtr, CommitIndexItem, binlog::*}, util::u64_usize};
 
-macro_rules! index_io {
-    ($res:expr) => {
-        match $res.await {
-            Ok(val) => val,
-            Err(err) => return Err(Error::IndexIo(err)),
-        }
-    };
-}
-
-macro_rules! content_io {
-    ($res:expr) => {
-        match $res.await {
-            Ok(val) => val,
-            Err(err) => return Err(Error::ContentIo(err)),
-        }
-    };
-}
-
-macro_rules! content_io_iter {
-    ($res:expr) => {
-        match $res.await {
-            Ok(val) => val,
-            Err(err) => return Some(Err(Error::ContentIo(err))),
-        }
-    };
-}
-
 macro_rules! index_io_iter_may_end {
     ($res:expr) => {
         match $res.await {
@@ -51,17 +24,17 @@ pub struct Writer<F: AsyncWrite + Unpin> {
 
 impl<F: AsyncWrite + Unpin> Writer<F> {
     pub async fn init(mut index: F, mut content: F) -> Result<Writer<F>> {
-        index_io!(index.write_all(&crate::BS_IDENT_INDEX.to_be_bytes()));
-        content_io!(content.write_all(&crate::BS_IDENT_CONTENT.to_be_bytes()));
+        index.write_all(&BS_IDENT_INDEX.to_be_bytes()).await.map_err(Error::IndexIo)?;
+        content.write_all(&BS_IDENT_CONTENT.to_be_bytes()).await.map_err(Error::ContentIo)?;
         Ok(Writer { index, content })
     }
 
     pub async fn write_commit(&mut self, commit: Commit) -> Result<()> {
         let (index, content) = write_commit(commit);
-        content_io!(self.content.write_all(&content));
-        content_io!(self.content.flush());
-        index_io!(self.index.write_all(&index));
-        index_io!(self.index.flush());
+        self.content.write_all(&content).await.map_err(Error::ContentIo)?;
+        self.content.flush().await.map_err(Error::ContentIo)?;
+        self.index.write_all(&index).await.map_err(Error::IndexIo)?;
+        self.index.flush().await.map_err(Error::IndexIo)?;
         Ok(())
     }
 }
@@ -87,15 +60,18 @@ pub struct Reader<F: AsyncRead + Unpin> {
 
 impl<F: AsyncRead + Unpin> Reader<F> {
     pub async fn init(mut index: F, mut content: F) -> Result<Reader<F>> {
-        check_index_ident(index_io!(read_fixed(&mut index)))?;
-        check_content_ident(content_io!(read_fixed(&mut content)))?;
+        check_index_ident(read_fixed(&mut index).await.map_err(Error::IndexIo)?)?;
+        check_content_ident(read_fixed(&mut content).await.map_err(Error::ContentIo)?)?;
         Ok(Reader { index, content })
     }
 
+    async fn read_commit_inner(&mut self, CommitIndexItem { ptr, len, hash }: CommitIndexItem) -> Result<(Commit, Hash)> {
+        check_commit(ptr, hash, read_vec(&mut self.content, u64_usize(len)).await.map_err(Error::IndexIo)?)
+    }
+
     pub async fn read_commit(&mut self) -> Option<Result<(Commit, Hash)>> {
-        let index = index_io_iter_may_end!(read_fixed(&mut self.index));
-        let CommitIndexItem { ptr, len, hash } = CommitIndexItem::from_bytes(index);
-        Some(check_commit(ptr, hash, content_io_iter!(read_vec(&mut self.content, u64_usize(len)))))
+        let index = CommitIndexItem::from_bytes(index_io_iter_may_end!(read_fixed(&mut self.index)));
+        Some(self.read_commit_inner(index).await)
     }
 }
 
@@ -105,7 +81,7 @@ pub struct IndexReader<F: AsyncRead + Unpin> {
 
 impl<F: AsyncRead + Unpin> IndexReader<F> {
     pub async fn init(mut index: F) -> Result<IndexReader<F>> {
-        check_index_ident(index_io!(read_fixed(&mut index)))?;
+        check_index_ident(read_fixed(&mut index).await.map_err(Error::IndexIo)?)?;
         Ok(IndexReader { index })
     }
 
@@ -130,44 +106,45 @@ pub struct IndexedReader<F: AsyncRead + AsyncSeek + Unpin> {
 }
 
 impl<F: AsyncRead + AsyncSeek + Unpin> IndexedReader<F> {
-    pub async fn init<F2: AsyncRead + Unpin>(index: F2, mut content: F) -> Result<IndexedReader<F>> {
-        let index = read_all_index(index).await?;
-        content_io!(content.seek(io::SeekFrom::Start(0)));
-        check_content_ident(content_io!(read_fixed(&mut content)))?;
+    pub async fn init(mut index: MemoryIndex, mut content: F) -> Result<IndexedReader<F>> {
+        index.clear_iter_state();
+        content.seek(io::SeekFrom::Start(0)).await.map_err(Error::ContentIo)?;
+        check_content_ident(read_fixed(&mut content).await.map_err(Error::ContentIo)?)?;
         Ok(IndexedReader { index, content, dirty: false })
     }
 
-    #[inline]
-    async fn dirt(&mut self, offset: u64) -> io::Result<()> {
-        self.content.seek(io::SeekFrom::Start(offset)).await?;
-        self.dirty = true;
-        Ok(())
-    }
-
-    #[inline]
-    async fn clean(&mut self, offset: u64) -> io::Result<()> {
-        if self.dirty {
-            self.content.seek(io::SeekFrom::Start(offset)).await?;
+    async fn read_commit_inner(&mut self, dirt: bool, (offset, CommitIndexItem { ptr, len, hash }): (u64, CommitIndexItem)) -> Result<(Commit, Hash)> {
+        // dirt dirty -> dirty
+        // T T -seek-> T
+        // T F -seek-> T
+        // F T -seek-> F
+        // F F ------> F
+        if dirt || self.dirty {
+            self.content.seek(io::SeekFrom::Start(offset)).await.map_err(Error::ContentIo)?;
+        }
+        if dirt {
+            self.dirty = true;
+        } else if self.dirty {
             self.dirty = false;
         }
-        Ok(())
+        check_commit(ptr, hash, read_vec(&mut self.content, u64_usize(len)).await.map_err(Error::ContentIo)?)
     }
 
+    #[inline]
     pub async fn find(&mut self, ptr: CommitPtr) -> Option<Result<(Commit, Hash)>> {
-        let (offset, CommitIndexItem { ptr, len, hash }) = self.index.find(ptr)?;
-        content_io_iter!(self.dirt(offset));
-        Some(check_commit(ptr, hash, content_io_iter!(read_vec(&mut self.content, u64_usize(len)))))
+        let find = self.index.find(ptr)?;
+        Some(self.read_commit_inner(true, find).await)
     }
 
+    #[inline]
     pub async fn find_by_hash(&mut self, hash: Hash) -> Option<Result<(Commit, Hash)>> {
-        let (offset, CommitIndexItem { ptr, len, hash }) = self.index.find_by_hash(hash)?;
-        content_io_iter!(self.dirt(offset));
-        Some(check_commit(ptr, hash, content_io_iter!(read_vec(&mut self.content, u64_usize(len)))))
+        let find = self.index.find_by_hash(hash)?;
+        Some(self.read_commit_inner(true, find).await)
     }
 
-    pub async fn read_commit(&mut self) -> Option<Result<(Commit, Hash)>> {
-        let (offset, CommitIndexItem { ptr, len, hash }) = self.index.next()?;
-        content_io_iter!(self.clean(offset));
-        Some(check_commit(ptr, hash, content_io_iter!(read_vec(&mut self.content, u64_usize(len)))))
+    #[inline]
+    pub async fn read_next(&mut self) -> Option<Result<(Commit, Hash)>> {
+        let next = self.index.next()?;
+        Some(self.read_commit_inner(false, next).await)
     }
 }

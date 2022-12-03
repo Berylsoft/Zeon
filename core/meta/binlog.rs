@@ -93,6 +93,11 @@ impl MemoryIndex {
         }
         None
     }
+
+    pub fn clear_iter_state(&mut self) {
+        self.index = 0;
+        self.offset = 0;
+    }
 }
 
 impl Iterator for MemoryIndex {
