@@ -69,8 +69,8 @@ impl<F: AsyncRead + Unpin> Reader<F> {
     pub async fn read_commit(&mut self) -> Option<Result<(Commit, Hash)>> {
         match index_read_index(&mut self.index).await {
             Some(Ok(index)) => Some(content_read_commit(&mut self.content, index).await),
-            Some(Err(err)) => return Some(Err(err)),
-            None => return None,
+            Some(Err(err)) => Some(Err(err)),
+            None => None,
         }
     }
 }
@@ -90,15 +90,14 @@ impl<F: AsyncRead + Unpin> IndexReader<F> {
     pub async fn read_commit(&mut self) -> Option<Result<CommitIndexItem>> {
         index_read_index(&mut self.index).await
     }
-}
 
-pub async fn read_all_index<F: AsyncRead + Unpin>(index: F) -> Result<MemoryIndex> {
-    let mut index = IndexReader::init(index).await?;
-    let mut items = Vec::new();
-    while let Some(item) = index.read_commit().await {
-        items.push(item?);
+    pub async fn read_all(mut self) -> Result<MemoryIndex> {
+        let mut items = Vec::new();
+        while let Some(item) = self.read_commit().await {
+            items.push(item?);
+        }
+        Ok(MemoryIndex::from_inner(items))
     }
-    Ok(MemoryIndex::new(items))
 }
 
 pub struct IndexedReader<F: AsyncRead + AsyncSeek + Unpin> {

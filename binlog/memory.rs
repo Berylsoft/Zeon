@@ -8,8 +8,17 @@ pub struct MemoryIndex {
 
 impl MemoryIndex {
     #[inline]
-    pub fn new(items: Vec<CommitIndexItem>) -> MemoryIndex {
+    pub(crate) fn from_inner(items: Vec<CommitIndexItem>) -> MemoryIndex {
         MemoryIndex { items, index: 0, offset: 0 }
+    }
+
+    pub fn clear_iter_state(&mut self) {
+        self.index = 0;
+        self.offset = 0;
+    }
+
+    pub fn into_inner(self) -> Vec<CommitIndexItem> {
+        self.items
     }
 
     pub fn find(&self, ptr: CommitPtr) -> Option<(u64, CommitIndexItem)> {
@@ -34,11 +43,6 @@ impl MemoryIndex {
             }
         }
         None
-    }
-
-    pub fn clear_iter_state(&mut self) {
-        self.index = 0;
-        self.offset = 0;
     }
 }
 
