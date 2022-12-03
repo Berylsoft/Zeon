@@ -14,6 +14,7 @@ macros::error_enum! {
         IndexIo(std::io::Error),
         ContentIo(std::io::Error),
         Duplicate(CommitPtr),
+        // Seek(u64, u64),
     } convert {
         Decode => DecodeError,
     }
@@ -27,18 +28,6 @@ macro_rules! check {
             return Err(Error::$varient($l, $r));
         }
     };
-}
-
-#[inline]
-pub fn check_index_ident(ident: [u8; 4]) -> Result<()> {
-    check!(u32::from_be_bytes(ident), BS_IDENT_INDEX, Ident);
-    Ok(())
-}
-
-#[inline]
-pub fn check_content_ident(ident: [u8; 4]) -> Result<()> {
-    check!(u32::from_be_bytes(ident), BS_IDENT_CONTENT, Ident);
-    Ok(())
 }
 
 pub fn write_commit(commit: Commit) -> ([u8; CommitIndexItem::SIZE], Vec<u8>) {
