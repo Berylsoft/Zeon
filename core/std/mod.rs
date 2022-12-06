@@ -261,6 +261,11 @@ def_std! {
         0x000C | std :"meta" :"complex-rev" -> def_struct! {
             /* reserved */
         }
+        0x000D | std :"meta" :"state-rev-ptr" -> def_struct! {
+            "object"     -> ObjectPtr
+            "trait-type" -> TypePtr
+            "state-attr" -> UInt8
+        }
     }
     traits {
         0x8000 | std :"meta" :"object-meta" -> def_trait! {

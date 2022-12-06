@@ -378,6 +378,7 @@ pub mod meta {
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(PartialOrd, Ord)]
     pub struct RevPtr {
         pub object: ObjectPtr,
         pub trait_type: TypePtr,
@@ -407,6 +408,7 @@ pub mod meta {
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(PartialOrd, Ord)]
     pub struct CommitPtr {
         pub ts: Timestamp,
         pub opr: ObjectPtr,
@@ -473,6 +475,36 @@ pub mod meta {
         fn deserialize(val: Value) -> Self {
             let []: [Value; 0usize] = val.into_struct().try_into().unwrap();
             Self {}
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    #[derive(PartialOrd, Ord)]
+    pub struct StateRevPtr {
+        pub object: ObjectPtr,
+        pub trait_type: TypePtr,
+        pub state_attr: u8,
+    }
+    impl Schema for StateRevPtr {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(13u16);
+        fn serialize(self) -> Value {
+            Value::Struct(
+                TypePtr::from_u16_unchecked(13u16),
+                vec![
+                    Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
+                    Value::UInt8(self.state_attr),
+                ],
+            )
+        }
+        fn deserialize(val: Value) -> Self {
+            let [object, trait_type, state_attr]: [Value; 3usize] = val
+                .into_struct()
+                .try_into()
+                .unwrap();
+            Self {
+                object: object.into_object_ptr(),
+                trait_type: trait_type.into_type_ptr(),
+                state_attr: state_attr.into_uint8(),
+            }
         }
     }
 }

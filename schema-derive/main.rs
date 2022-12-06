@@ -350,9 +350,20 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let sers = fields.clone().into_iter().map(|(name, ty)| type2ser(ty, ident(macros::concat_string!("self.", to_snake_case(&name)))));
             let des = fields.into_iter().map(|(name, ty)| type2de(ty, ident(to_snake_case(&name))));
             let tys = tys.into_iter().map(type2type);
-            
+
+            let ord = if [
+                0x0007, // std:meta:rev-ptr
+                0x0008, // std:meta:commit-ptr
+                0x000D, // std:meta:state-rev-ptr
+            ].contains(&ptr) {
+                quote!(#[derive(PartialOrd, Ord)])
+            } else {
+                quote!()
+            };
+
             quote!(
                 #[derive(Clone, Debug, PartialEq, Eq)]
+                #ord
                 pub struct #name {
                     #(pub #names: #tys,)*
                 }
