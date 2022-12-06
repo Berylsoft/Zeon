@@ -227,20 +227,18 @@ def_std! {
             "extends"      -> list!(TypePtr)
             "validators"   -> list!(ref_struct!(:"types" :"validator"))
         }
-        0x0006 | std :"meta" :"rev-type" -> def_c_enum! {
-            "const"
-            "mut"
-            "iter-list-add"
-            "iter-set-add"
-            "iter-set-remove"
-            "complex"
+        0x0006 | std :"meta" :"rev" -> def_enum! {
+            "const"            -> Unknown
+            "mut"              -> Unknown
+            "iter-list-add"    -> list!(Unknown)
+            "iter-set-add"     -> list!(Unknown)
+            "iter-set-remove"  -> list!(Unknown)
+            "complex"          -> ref_struct!(:"meta" :"complex-rev")
         }
-        0x0007 | std :"meta" :"rev" -> def_struct! {
+        0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
             "object"     -> ObjectPtr
             "trait-type" -> TypePtr
             "attr"       -> UInt8
-            "rev-type"   -> ref_c_enum!(:"meta" :"rev-type")
-            "value"      -> Unknown
         }
         0x0008 | std :"meta" :"commit-ptr" -> def_struct! {
             "ts"  -> Timestamp
@@ -249,7 +247,7 @@ def_std! {
         }
         0x0009 | std :"meta" :"commit" -> def_struct! {
             "ptr" -> ref_struct!(:"meta" :"commit-ptr")
-            "revs" -> list!(ref_struct!(:"meta" :"rev"))
+            "revs" -> map!(ref_struct!(:"meta" :"rev-ptr"), ref_struct!(:"meta" :"rev"))
         }
         0x000A | std :"types" :"state-attr" -> def_struct! {
             "attr-name" -> String /* simple-name */
@@ -259,6 +257,9 @@ def_std! {
             "name"      -> String
             "attr-name" -> String /* simple-name */
             "parent"    -> option!(TypePtr)
+        }
+        0x000C | std :"meta" :"complex-rev" -> def_struct! {
+            /* reserved */
         }
     }
     traits {

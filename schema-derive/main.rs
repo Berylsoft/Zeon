@@ -399,6 +399,7 @@ fn derive_file() -> TokenStream {
         clippy::let_unit_value, // Enum::Variant(val) => { let _ = val; Value::Unit },
         clippy::redundant_closure, // Value::List(Type::SimpleType, self.field.into_iter().map(|sv| Value::SimpleType(sv)).collect()),
         clippy::redundant_field_names, // (Type::Unknown) Struct { field: field }
+        clippy::map_identity, // (Type::List(Type::Unknown)) val.into_list().into_iter().map(|sv| sv).collect(),
     )]);
     file.extend(map.into_iter().map(|(path, outs)| {
         let path = ident(path);

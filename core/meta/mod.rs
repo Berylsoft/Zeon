@@ -30,6 +30,6 @@ pub struct CommitIndexItem {
     pub hash: [u8; 32],
 }
 
-pub use crate::std::codegen::meta::{RevType, Rev, CommitPtr, Commit};
+pub use crate::std::codegen::meta::{Rev, RevPtr, CommitPtr, Commit};
 
 mod casting;

@@ -5,6 +5,7 @@
     clippy::let_unit_value,
     clippy::redundant_closure,
     clippy::redundant_field_names,
+    clippy::map_identity,
 )]
 pub mod types {
     use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
@@ -306,64 +307,95 @@ pub mod prim {
 }
 pub mod meta {
     use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    pub enum RevType {
-        Const,
-        Mut,
-        IterListAdd,
-        IterSetAdd,
-        IterSetRemove,
-        Complex,
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub enum Rev {
+        Const(Value),
+        Mut(Value),
+        IterListAdd(Vec<Value>),
+        IterSetAdd(Vec<Value>),
+        IterSetRemove(Vec<Value>),
+        Complex(super::meta::ComplexRev),
     }
-    impl Schema for RevType {
+    impl Schema for Rev {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(6u16);
         fn serialize(self) -> Value {
-            Value::CEnum(
+            Value::Enum(
                 TypePtr::from_u16_unchecked(6u16),
                 match &self {
-                    Self::Const => 0u8,
-                    Self::Mut => 1u8,
-                    Self::IterListAdd => 2u8,
-                    Self::IterSetAdd => 3u8,
-                    Self::IterSetRemove => 4u8,
-                    Self::Complex => 5u8,
+                    Self::Const(_) => 0u8,
+                    Self::Mut(_) => 1u8,
+                    Self::IterListAdd(_) => 2u8,
+                    Self::IterSetAdd(_) => 3u8,
+                    Self::IterSetRemove(_) => 4u8,
+                    Self::Complex(_) => 5u8,
                 },
+                Box::new(
+                    match self {
+                        Self::Const(val) => val,
+                        Self::Mut(val) => val,
+                        Self::IterListAdd(val) => {
+                            Value::List(
+                                Type::Unknown,
+                                val.into_iter().map(|sv| sv).collect(),
+                            )
+                        }
+                        Self::IterSetAdd(val) => {
+                            Value::List(
+                                Type::Unknown,
+                                val.into_iter().map(|sv| sv).collect(),
+                            )
+                        }
+                        Self::IterSetRemove(val) => {
+                            Value::List(
+                                Type::Unknown,
+                                val.into_iter().map(|sv| sv).collect(),
+                            )
+                        }
+                        Self::Complex(val) => val.serialize(),
+                    },
+                ),
             )
         }
         fn deserialize(val: Value) -> Self {
-            let variant = val.into_c_enum();
+            let (variant, val) = val.into_enum();
             match variant {
-                0u8 => Self::Const,
-                1u8 => Self::Mut,
-                2u8 => Self::IterListAdd,
-                3u8 => Self::IterSetAdd,
-                4u8 => Self::IterSetRemove,
-                5u8 => Self::Complex,
+                0u8 => Self::Const(val),
+                1u8 => Self::Mut(val),
+                2u8 => {
+                    Self::IterListAdd(val.into_list().into_iter().map(|sv| sv).collect())
+                }
+                3u8 => {
+                    Self::IterSetAdd(val.into_list().into_iter().map(|sv| sv).collect())
+                }
+                4u8 => {
+                    Self::IterSetRemove(
+                        val.into_list().into_iter().map(|sv| sv).collect(),
+                    )
+                }
+                5u8 => Self::Complex(val.deserialize_into()),
                 _ => unreachable!(),
             }
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct Rev {
+    pub struct RevPtr {
         pub object: ObjectPtr,
         pub trait_type: TypePtr,
         pub attr: u8,
-        pub rev_type: super::meta::RevType,
-        pub value: Value,
     }
-    impl Schema for Rev {
+    impl Schema for RevPtr {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(7u16);
         fn serialize(self) -> Value {
             Value::Struct(
                 TypePtr::from_u16_unchecked(7u16),
                 vec![
                     Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
-                    Value::UInt8(self.attr), self.rev_type.serialize(), self.value,
+                    Value::UInt8(self.attr),
                 ],
             )
         }
         fn deserialize(val: Value) -> Self {
-            let [object, trait_type, attr, rev_type, value]: [Value; 5usize] = val
+            let [object, trait_type, attr]: [Value; 3usize] = val
                 .into_struct()
                 .try_into()
                 .unwrap();
@@ -371,8 +403,6 @@ pub mod meta {
                 object: object.into_object_ptr(),
                 trait_type: trait_type.into_type_ptr(),
                 attr: attr.into_uint8(),
-                rev_type: rev_type.deserialize_into(),
-                value: value,
             }
         }
     }
@@ -405,7 +435,7 @@ pub mod meta {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct Commit {
         pub ptr: super::meta::CommitPtr,
-        pub revs: Vec<super::meta::Rev>,
+        pub revs: Vec<(super::meta::RevPtr, super::meta::Rev)>,
     }
     impl Schema for Commit {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
@@ -414,8 +444,10 @@ pub mod meta {
                 TypePtr::from_u16_unchecked(9u16),
                 vec![
                     self.ptr.serialize(),
-                    Value::List(Type::Struct(TypePtr::from_u16_unchecked(7u16)), self
-                    .revs.into_iter().map(| sv | sv.serialize()).collect()),
+                    Value::Map((Type::Struct(TypePtr::from_u16_unchecked(7u16)),
+                    Type::Struct(TypePtr::from_u16_unchecked(6u16))), self.revs
+                    .into_iter().map(| (sk, sv) | (sk.serialize(), sv.serialize()))
+                    .collect()),
                 ],
             )
         }
@@ -424,11 +456,23 @@ pub mod meta {
             Self {
                 ptr: ptr.deserialize_into(),
                 revs: revs
-                    .into_list()
+                    .into_map()
                     .into_iter()
-                    .map(|sv| sv.deserialize_into())
+                    .map(|(sk, sv)| (sk.deserialize_into(), sv.deserialize_into()))
                     .collect(),
             }
+        }
+    }
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct ComplexRev {}
+    impl Schema for ComplexRev {
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(12u16);
+        fn serialize(self) -> Value {
+            Value::Struct(TypePtr::from_u16_unchecked(12u16), vec![])
+        }
+        fn deserialize(val: Value) -> Self {
+            let []: [Value; 0usize] = val.into_struct().try_into().unwrap();
+            Self {}
         }
     }
 }

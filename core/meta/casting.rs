@@ -103,33 +103,6 @@ impl TypePtr {
     }
 }
 
-impl From<u8> for RevType {
-    fn from(b: u8) -> Self {
-        match b {
-            0 => RevType::Const,
-            1 => RevType::Mut,
-            2 => RevType::IterListAdd,
-            3 => RevType::IterSetAdd,
-            4 => RevType::IterSetRemove,
-            5 => RevType::Complex,
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl From<RevType> for u8 {
-    fn from(s: RevType) -> Self {
-        match s {
-            RevType::Const => 0,
-            RevType::Mut => 1,
-            RevType::IterListAdd => 2,
-            RevType::IterSetAdd => 3,
-            RevType::IterSetRemove => 4,
-            RevType::Complex => 5,
-        }
-    }
-}
-
 macros::bin_struct_complex_impl! {
     CommitPtr {
         ts  -> Struct(Timestamp)
