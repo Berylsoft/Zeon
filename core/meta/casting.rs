@@ -109,6 +109,7 @@ macros::bin_struct_complex_impl! {
         opr -> Struct(ObjectPtr)
         seq -> Number(u16)
     }
+    pub impl
 }
 
 macros::bin_struct_complex_impl! {
@@ -117,6 +118,7 @@ macros::bin_struct_complex_impl! {
         len  -> Number(u64)
         hash -> Bytes(32)
     }
+    pub impl
 }
 
 #[cfg(test)]
