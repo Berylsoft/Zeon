@@ -17,15 +17,15 @@ pub mod types {
         Struct(Vec<(String, Type)>),
     }
     impl Schema for DefType {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(0u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(0);
         fn serialize(self) -> Value {
             Value::Enum(
-                TypePtr::from_u16_unchecked(0u16),
+                TypePtr::from_u16_unchecked(0),
                 match &self {
-                    Self::Alias(_) => 0u64,
-                    Self::CEnum(_) => 1u64,
-                    Self::Enum(_) => 2u64,
-                    Self::Struct(_) => 3u64,
+                    Self::Alias(_) => 0,
+                    Self::CEnum(_) => 1,
+                    Self::Enum(_) => 2,
+                    Self::Struct(_) => 3,
                 },
                 Box::new(
                     match self {
@@ -61,13 +61,13 @@ pub mod types {
         fn deserialize(val: Value) -> Self {
             let (variant, val) = val.into_enum();
             match variant {
-                0u64 => Self::Alias(val.into_type()),
-                1u64 => {
+                0 => Self::Alias(val.into_type()),
+                1 => {
                     Self::CEnum(
                         val.into_list().into_iter().map(|sv| sv.into_string()).collect(),
                     )
                 }
-                2u64 => {
+                2 => {
                     Self::Enum(
                         val
                             .into_map()
@@ -76,7 +76,7 @@ pub mod types {
                             .collect(),
                     )
                 }
-                3u64 => {
+                3 => {
                     Self::Struct(
                         val
                             .into_map()
@@ -96,10 +96,10 @@ pub mod types {
         pub val_type: Type,
     }
     impl Schema for CommitAttr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(2u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(2);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(2u16),
+                TypePtr::from_u16_unchecked(2),
                 vec![
                     self.attr_type.serialize(), Value::String(self.attr_name),
                     Value::Type(self.val_type),
@@ -127,27 +127,27 @@ pub mod types {
         Complex,
     }
     impl Schema for CommitAttrType {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(3u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(3);
         fn serialize(self) -> Value {
             Value::CEnum(
-                TypePtr::from_u16_unchecked(3u16),
+                TypePtr::from_u16_unchecked(3),
                 match &self {
-                    Self::Const => 0u64,
-                    Self::Mut => 1u64,
-                    Self::IterList => 2u64,
-                    Self::IterSet => 3u64,
-                    Self::Complex => 4u64,
+                    Self::Const => 0,
+                    Self::Mut => 1,
+                    Self::IterList => 2,
+                    Self::IterSet => 3,
+                    Self::Complex => 4,
                 },
             )
         }
         fn deserialize(val: Value) -> Self {
             let variant = val.into_c_enum();
             match variant {
-                0u64 => Self::Const,
-                1u64 => Self::Mut,
-                2u64 => Self::IterList,
-                3u64 => Self::IterSet,
-                4u64 => Self::Complex,
+                0 => Self::Const,
+                1 => Self::Mut,
+                2 => Self::IterList,
+                3 => Self::IterSet,
+                4 => Self::Complex,
                 _ => unreachable!(),
             }
         }
@@ -160,18 +160,18 @@ pub mod types {
         pub validators: Vec<super::types::Validator>,
     }
     impl Schema for Trait {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(5u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(5);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(5u16),
+                TypePtr::from_u16_unchecked(5),
                 vec![
-                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(2u16)), self
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(2)), self
                     .commit_attrs.into_iter().map(| sv | sv.serialize()).collect()),
-                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(10u16)), self
+                    Value::List(Type::Enum(TypePtr::from_u16_unchecked(10)), self
                     .state_attrs.into_iter().map(| sv | sv.serialize()).collect()),
                     Value::List(Type::TypePtr, self.extends.into_iter().map(| sv |
                     Value::TypePtr(sv)).collect()),
-                    Value::List(Type::Struct(TypePtr::from_u16_unchecked(11u16)), self
+                    Value::List(Type::Struct(TypePtr::from_u16_unchecked(11)), self
                     .validators.into_iter().map(| sv | sv.serialize()).collect()),
                 ],
             )
@@ -211,10 +211,10 @@ pub mod types {
         pub val_type: Type,
     }
     impl Schema for StateAttr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(10u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(10);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(10u16),
+                TypePtr::from_u16_unchecked(10),
                 vec![Value::String(self.attr_name), Value::Type(self.val_type),],
             )
         }
@@ -236,10 +236,10 @@ pub mod types {
         pub parent: Option<TypePtr>,
     }
     impl Schema for Validator {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(11u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(11);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(11u16),
+                TypePtr::from_u16_unchecked(11),
                 vec![
                     Value::String(self.name), Value::String(self.attr_name),
                     Value::Option(Type::TypePtr, Box::new(self.parent.map(| sv |
@@ -265,7 +265,7 @@ pub mod prim {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct UnixTs(pub u64);
     impl Schema for UnixTs {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(1u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(1);
         fn serialize(self) -> Value {
             Value::UInt(self.0)
         }
@@ -286,7 +286,7 @@ pub mod prim {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct SimpleName(pub String);
     impl Schema for SimpleName {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(4u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(4);
         fn serialize(self) -> Value {
             Value::String(self.0)
         }
@@ -317,17 +317,17 @@ pub mod meta {
         Complex(super::meta::ComplexRev),
     }
     impl Schema for Rev {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(6u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(6);
         fn serialize(self) -> Value {
             Value::Enum(
-                TypePtr::from_u16_unchecked(6u16),
+                TypePtr::from_u16_unchecked(6),
                 match &self {
-                    Self::Const(_) => 0u64,
-                    Self::Mut(_) => 1u64,
-                    Self::IterListAdd(_) => 2u64,
-                    Self::IterSetAdd(_) => 3u64,
-                    Self::IterSetRemove(_) => 4u64,
-                    Self::Complex(_) => 5u64,
+                    Self::Const(_) => 0,
+                    Self::Mut(_) => 1,
+                    Self::IterListAdd(_) => 2,
+                    Self::IterSetAdd(_) => 3,
+                    Self::IterSetRemove(_) => 4,
+                    Self::Complex(_) => 5,
                 },
                 Box::new(
                     match self {
@@ -359,20 +359,18 @@ pub mod meta {
         fn deserialize(val: Value) -> Self {
             let (variant, val) = val.into_enum();
             match variant {
-                0u64 => Self::Const(val),
-                1u64 => Self::Mut(val),
-                2u64 => {
+                0 => Self::Const(val),
+                1 => Self::Mut(val),
+                2 => {
                     Self::IterListAdd(val.into_list().into_iter().map(|sv| sv).collect())
                 }
-                3u64 => {
-                    Self::IterSetAdd(val.into_list().into_iter().map(|sv| sv).collect())
-                }
-                4u64 => {
+                3 => Self::IterSetAdd(val.into_list().into_iter().map(|sv| sv).collect()),
+                4 => {
                     Self::IterSetRemove(
                         val.into_list().into_iter().map(|sv| sv).collect(),
                     )
                 }
-                5u64 => Self::Complex(val.deserialize_into()),
+                5 => Self::Complex(val.deserialize_into()),
                 _ => unreachable!(),
             }
         }
@@ -385,10 +383,10 @@ pub mod meta {
         pub attr: u8,
     }
     impl Schema for RevPtr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(7u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(7);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(7u16),
+                TypePtr::from_u16_unchecked(7),
                 vec![
                     Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
                     Value::UInt8(self.attr),
@@ -415,10 +413,10 @@ pub mod meta {
         pub seq: u16,
     }
     impl Schema for CommitPtr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(8u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(8);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(8u16),
+                TypePtr::from_u16_unchecked(8),
                 vec![
                     Value::Timestamp(self.ts), Value::ObjectPtr(self.opr),
                     Value::UInt16(self.seq),
@@ -440,16 +438,15 @@ pub mod meta {
         pub revs: Vec<(super::meta::RevPtr, super::meta::Rev)>,
     }
     impl Schema for Commit {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(9u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(9);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(9u16),
+                TypePtr::from_u16_unchecked(9),
                 vec![
                     self.ptr.serialize(),
-                    Value::Map((Type::Struct(TypePtr::from_u16_unchecked(7u16)),
-                    Type::Struct(TypePtr::from_u16_unchecked(6u16))), self.revs
-                    .into_iter().map(| (sk, sv) | (sk.serialize(), sv.serialize()))
-                    .collect()),
+                    Value::Map((Type::Struct(TypePtr::from_u16_unchecked(7)),
+                    Type::Struct(TypePtr::from_u16_unchecked(6))), self.revs.into_iter()
+                    .map(| (sk, sv) | (sk.serialize(), sv.serialize())).collect()),
                 ],
             )
         }
@@ -468,9 +465,9 @@ pub mod meta {
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct ComplexRev {}
     impl Schema for ComplexRev {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(12u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(12);
         fn serialize(self) -> Value {
-            Value::Struct(TypePtr::from_u16_unchecked(12u16), vec![])
+            Value::Struct(TypePtr::from_u16_unchecked(12), vec![])
         }
         fn deserialize(val: Value) -> Self {
             let []: [Value; 0usize] = val.into_struct().try_into().unwrap();
@@ -485,10 +482,10 @@ pub mod meta {
         pub state_attr: u8,
     }
     impl Schema for StateRevPtr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(13u16);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(13);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(13u16),
+                TypePtr::from_u16_unchecked(13),
                 vec![
                     Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
                     Value::UInt8(self.state_attr),

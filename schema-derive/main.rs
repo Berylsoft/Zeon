@@ -1,6 +1,6 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, Literal};
 use quote::quote;
-use zeon::{types::{Type, DefType}, meta::TypePtr, std::{ptr2path, init, Std}, util::{to_pascal_case, to_snake_case}};
+use zeon::{types::{Type, DefType, EnumVariantId}, meta::TypePtr, std::{ptr2path, init, Std}, util::{to_pascal_case, to_snake_case}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
     s.as_ref().parse().unwrap()
@@ -21,8 +21,8 @@ fn ptr2rustpath(ptr: TypePtr) -> TokenStream {
 fn ptr2tokens(ptr: TypePtr) -> TokenStream {
     match ptr {
         TypePtr::Std(ptr) => {
-            let n = ptr.to_u16();
-            quote!(TypePtr::from_u16_unchecked(#n))
+            let ptr_literal = Literal::u16_unsuffixed(ptr.to_u16());
+            quote!(TypePtr::from_u16_unchecked(#ptr_literal))
         },
         TypePtr::Hash(hash) => {
             let hex = hex::encode(hash);
@@ -223,6 +223,7 @@ fn type2ser(ty: Type, v: TokenStream) -> TokenStream {
 }
 
 fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
+    let ptr_literal = Literal::u16_unsuffixed(ptr);
     match dt {
         DefType::Alias(ty) => {
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
@@ -234,7 +235,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 pub struct #name(pub #ty);
 
                 impl Schema for #name {
-                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr_literal);
 
                     fn serialize(self) -> Value {
                         #ser
@@ -259,12 +260,12 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::CEnum(names) => {
-            let len: u8 = names.len().try_into().unwrap();
+            let len: EnumVariantId = names.len().try_into().unwrap();
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
             let names4 = names.clone();
-            let i = (0..len).map(|i| quote!(#i));
+            let i = (0..len).map(Literal::u64_unsuffixed);
             let i2 = i.clone();
 
             quote!(
@@ -274,11 +275,11 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 }
 
                 impl Schema for #name {
-                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr_literal);
 
                     fn serialize(self) -> Value {
                         Value::CEnum(
-                            TypePtr::from_u16_unchecked(#ptr),
+                            TypePtr::from_u16_unchecked(#ptr_literal),
                             match &self {
                                 #(Self::#names2 => #i,)*
                             },
@@ -296,14 +297,14 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             )
         },
         DefType::Enum(variants) => {
-            let len: u8 = variants.len().try_into().unwrap();
+            let len: EnumVariantId = variants.len().try_into().unwrap();
             let name = ptr2rustname(TypePtr::from_u16_unchecked(ptr));
             let (names, tys): (Vec<String>, Vec<Type>) = variants.into_iter().unzip();
             let names = names.into_iter().map(|name| ident(to_pascal_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
             let names4 = names.clone();
-            let i = (0..len).map(|i| quote!(#i));
+            let i = (0..len).map(Literal::u64_unsuffixed);
             let i2 = i.clone();
             let sers = tys.clone().into_iter().map(|ty| type2ser(ty, quote!(val)));
             let des = tys.clone().into_iter().map(|ty| type2de(ty, quote!(val)));
@@ -316,11 +317,11 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 }
 
                 impl Schema for #name {
-                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr_literal);
 
                     fn serialize(self) -> Value {
                         Value::Enum(
-                            TypePtr::from_u16_unchecked(#ptr),
+                            TypePtr::from_u16_unchecked(#ptr_literal),
                             match &self {
                                 #(Self::#names2(_) => #i,)*
                             },
@@ -369,10 +370,10 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
                 }
 
                 impl Schema for #name {
-                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr);
+                    const PTR: TypePtr = TypePtr::from_u16_unchecked(#ptr_literal);
 
                     fn serialize(self) -> Value {
-                        Value::Struct(TypePtr::from_u16_unchecked(#ptr), vec![
+                        Value::Struct(TypePtr::from_u16_unchecked(#ptr_literal), vec![
                             #(#sers,)*
                         ])
                     }
@@ -432,7 +433,7 @@ fn main() {
     let path = args_os().nth(1).unwrap_or_else(|| PATH.into());
     {
         let mut f = OpenOptions::new().read(true).open(&path).unwrap();
-        let mut buf = vec![0u8; HEADER.len()];
+        let mut buf = vec![0; HEADER.len()];
         f.read_exact(&mut buf).unwrap();
         if buf != HEADER {
             panic!("overwrite protected");
