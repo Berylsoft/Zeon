@@ -267,12 +267,12 @@ impl<'a> Reader<'a> {
                 Value::Tuple(s)
             },
             HTag::CEnum => {
-                let ev = self.with_uvar(l4)?.try_into()?;
+                let ev = self.with_uvar(l4)?;
                 let ptr = self.typeptr()?;
                 Value::CEnum(ptr, ev)
             },
             HTag::Enum => {
-                let ev = self.with_uvar(l4)?.try_into()?;
+                let ev = self.with_uvar(l4)?;
                 let ptr = self.typeptr()?;
                 let v = self.val()?;
                 Value::Enum(ptr, ev, Box::new(v))

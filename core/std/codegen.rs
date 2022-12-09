@@ -22,10 +22,10 @@ pub mod types {
             Value::Enum(
                 TypePtr::from_u16_unchecked(0u16),
                 match &self {
-                    Self::Alias(_) => 0u8,
-                    Self::CEnum(_) => 1u8,
-                    Self::Enum(_) => 2u8,
-                    Self::Struct(_) => 3u8,
+                    Self::Alias(_) => 0u64,
+                    Self::CEnum(_) => 1u64,
+                    Self::Enum(_) => 2u64,
+                    Self::Struct(_) => 3u64,
                 },
                 Box::new(
                     match self {
@@ -61,13 +61,13 @@ pub mod types {
         fn deserialize(val: Value) -> Self {
             let (variant, val) = val.into_enum();
             match variant {
-                0u8 => Self::Alias(val.into_type()),
-                1u8 => {
+                0u64 => Self::Alias(val.into_type()),
+                1u64 => {
                     Self::CEnum(
                         val.into_list().into_iter().map(|sv| sv.into_string()).collect(),
                     )
                 }
-                2u8 => {
+                2u64 => {
                     Self::Enum(
                         val
                             .into_map()
@@ -76,7 +76,7 @@ pub mod types {
                             .collect(),
                     )
                 }
-                3u8 => {
+                3u64 => {
                     Self::Struct(
                         val
                             .into_map()
@@ -132,22 +132,22 @@ pub mod types {
             Value::CEnum(
                 TypePtr::from_u16_unchecked(3u16),
                 match &self {
-                    Self::Const => 0u8,
-                    Self::Mut => 1u8,
-                    Self::IterList => 2u8,
-                    Self::IterSet => 3u8,
-                    Self::Complex => 4u8,
+                    Self::Const => 0u64,
+                    Self::Mut => 1u64,
+                    Self::IterList => 2u64,
+                    Self::IterSet => 3u64,
+                    Self::Complex => 4u64,
                 },
             )
         }
         fn deserialize(val: Value) -> Self {
             let variant = val.into_c_enum();
             match variant {
-                0u8 => Self::Const,
-                1u8 => Self::Mut,
-                2u8 => Self::IterList,
-                3u8 => Self::IterSet,
-                4u8 => Self::Complex,
+                0u64 => Self::Const,
+                1u64 => Self::Mut,
+                2u64 => Self::IterList,
+                3u64 => Self::IterSet,
+                4u64 => Self::Complex,
                 _ => unreachable!(),
             }
         }
@@ -322,12 +322,12 @@ pub mod meta {
             Value::Enum(
                 TypePtr::from_u16_unchecked(6u16),
                 match &self {
-                    Self::Const(_) => 0u8,
-                    Self::Mut(_) => 1u8,
-                    Self::IterListAdd(_) => 2u8,
-                    Self::IterSetAdd(_) => 3u8,
-                    Self::IterSetRemove(_) => 4u8,
-                    Self::Complex(_) => 5u8,
+                    Self::Const(_) => 0u64,
+                    Self::Mut(_) => 1u64,
+                    Self::IterListAdd(_) => 2u64,
+                    Self::IterSetAdd(_) => 3u64,
+                    Self::IterSetRemove(_) => 4u64,
+                    Self::Complex(_) => 5u64,
                 },
                 Box::new(
                     match self {
@@ -359,20 +359,20 @@ pub mod meta {
         fn deserialize(val: Value) -> Self {
             let (variant, val) = val.into_enum();
             match variant {
-                0u8 => Self::Const(val),
-                1u8 => Self::Mut(val),
-                2u8 => {
+                0u64 => Self::Const(val),
+                1u64 => Self::Mut(val),
+                2u64 => {
                     Self::IterListAdd(val.into_list().into_iter().map(|sv| sv).collect())
                 }
-                3u8 => {
+                3u64 => {
                     Self::IterSetAdd(val.into_list().into_iter().map(|sv| sv).collect())
                 }
-                4u8 => {
+                4u64 => {
                     Self::IterSetRemove(
                         val.into_list().into_iter().map(|sv| sv).collect(),
                     )
                 }
-                5u8 => Self::Complex(val.deserialize_into()),
+                5u64 => Self::Complex(val.deserialize_into()),
                 _ => unreachable!(),
             }
         }

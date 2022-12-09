@@ -215,14 +215,14 @@ impl Value {
         unreachable!()
     }
 
-    pub fn into_c_enum(self) -> EnumVariant {
+    pub fn into_c_enum(self) -> EnumVariantId {
         if let Value::CEnum(_ptr, ev) = self {
             return ev;
         }
         unreachable!()
     }
 
-    pub fn into_enum(self) -> (EnumVariant, Value) {
+    pub fn into_enum(self) -> (EnumVariantId, Value) {
         if let Value::Enum(_ptr, ev, v) = self {
             return (ev, *v);
         }

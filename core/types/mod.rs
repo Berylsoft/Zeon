@@ -1,6 +1,8 @@
 use crate::meta::{Timestamp, ObjectPtr, TypePtr};
 
-pub type EnumVariant = u8;
+pub type EnumVariantId = u64;
+pub type TupleItemId = u8;
+pub type TraitAttrId = u8;
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
@@ -115,8 +117,8 @@ pub enum Value {
     Tuple(Vec<Value>),
 
     Alias(TypePtr, Box<Value>),
-    CEnum(TypePtr, EnumVariant),
-    Enum(TypePtr, EnumVariant, Box<Value>),
+    CEnum(TypePtr, EnumVariantId),
+    Enum(TypePtr, EnumVariantId, Box<Value>),
     Struct(TypePtr, Vec<Value>),
 
     Type(Type),
@@ -141,7 +143,6 @@ macros::error_enum! {
     pub enum DecodeError {} convert {
         Io => std::io::Error,
         Utf8 => std::string::FromUtf8Error,
-        VarientExceed => std::num::TryFromIntError,
         Tag => num_enum::TryFromPrimitiveError<Tag>,
         HTag => num_enum::TryFromPrimitiveError<HTag>,
         LTag => num_enum::TryFromPrimitiveError<LTag>,

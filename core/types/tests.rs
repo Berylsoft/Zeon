@@ -7,9 +7,11 @@ fn test() {
         ($v:expr, $exp:expr) => {{
             println!("{:?}", &$v);
             let buf = $v.clone().encode();
-            println!("{}", hex::encode($exp.as_slice()));
+            println!("len={}", $exp.len());
+            println!("{}", hex::encode(&$exp));
+            println!("len={}", buf.len());
             println!("{}", hex::encode(&buf));
-            assert_eq!(&buf, $exp.as_slice());
+            assert_eq!(&buf, &$exp);
             let v2 = Value::decode(&buf).unwrap();
             assert_eq!($v, v2);
         }};

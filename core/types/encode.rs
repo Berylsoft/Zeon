@@ -88,6 +88,7 @@ impl Writer {
             },
 
             Type::Tuple(s) => {
+                // should checked in type check
                 self.u8(s.len().try_into().unwrap());
 
                 for t in s {
@@ -138,7 +139,7 @@ impl Writer {
     }
 
     fn with_szvar(&mut self, htag: HTag, sz: usize) {
-        self.with_uvar(htag, sz.try_into().unwrap())
+        self.with_uvar(htag, crate::util::usize_u64(sz))
     }
 
     fn with_fvar(&mut self, htag: HTag, f: u64) {
