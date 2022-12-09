@@ -10,13 +10,13 @@
 pub mod types {
     use crate::{types::*, meta::{Timestamp, ObjectPtr, TypePtr}};
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub enum Deftype {
+    pub enum DefType {
         Alias(Type),
         CEnum(Vec<String>),
         Enum(Vec<(String, Type)>),
         Struct(Vec<(String, Type)>),
     }
-    impl Schema for Deftype {
+    impl Schema for DefType {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(0u16);
         fn serialize(self) -> Value {
             Value::Enum(

@@ -201,7 +201,7 @@ macro_rules! def_std {
 
 def_std! {
     types {
-        0x0000 | std :"types" :"deftype" -> def_enum! {
+        0x0000 | std :"types" :"def-type" -> def_enum! {
             "alias"  -> Type
             "c-enum" -> list!(String /* simple-name */)
             "enum"   -> map!(String /* simple-name */, Type)
