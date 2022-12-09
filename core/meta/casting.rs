@@ -77,18 +77,19 @@ impl StdPtr {
     }
 }
 
-impl TypePtr {
-    pub const SIZE: usize = 8;
+impl ByteRepr for TypePtr {
+    const SIZE: usize = 8;
+    type Bytes = [u8; Self::SIZE];
 
-    pub fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
-        match raw[0] {
-            0x00 => TypePtr::Std(StdPtr::from_u16(u16::from_be_bytes(raw[6..7].try_into().unwrap()))),
-            0xFF => TypePtr::Hash(raw[1..7].try_into().unwrap()),
-            _ => unreachable!(),
+    fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
+        if raw[0] == 0xFF {
+            TypePtr::Hash(raw[1..7].try_into().unwrap())
+        } else {
+            TypePtr::Std(StdPtr::from_u16(u16::from_be_bytes(raw[6..7].try_into().unwrap())))
         }
     }
 
-    pub fn to_bytes(&self) -> [u8; Self::SIZE] {
+    fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut buf = [0u8; Self::SIZE];
         match self {
             TypePtr::Std(stdptr) => {
@@ -103,22 +104,20 @@ impl TypePtr {
     }
 }
 
-macros::bin_struct_complex_impl! {
+byterepr_struct_impl! {
     CommitPtr {
-        ts  -> Struct(Timestamp)
-        opr -> Struct(ObjectPtr)
-        seq -> Number(u16)
+        ts: Timestamp,
+        opr: ObjectPtr,
+        seq: u16,
     }
-    pub impl
 }
 
-macros::bin_struct_complex_impl! {
+byterepr_struct_impl! {
     CommitIndexItem {
-        ptr  -> Struct(CommitPtr)
-        len  -> Number(u64)
-        hash -> Bytes(32)
+        ptr: CommitPtr,
+        len: u64,
+        hash: [u8; 32],
     }
-    pub impl
 }
 
 #[cfg(test)]

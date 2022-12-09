@@ -138,7 +138,7 @@ pub(self) const EXT64: u8 = 0xF;
 
 macros::error_enum! {
     #[derive(Debug)]
-    DecodeError {} convert {
+    pub enum DecodeError {} convert {
         Io => std::io::Error,
         Utf8 => std::string::FromUtf8Error,
         VarientExceed => std::num::TryFromIntError,

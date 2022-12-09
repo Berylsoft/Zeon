@@ -5,18 +5,18 @@ pub const BS_IDENT_CONTENT: u32 = 0x42650200;
 
 use std::{io, marker::Unpin};
 use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt};
-use zeon::{meta::{Commit, CommitPtr, CommitIndexItem}, types::{Value, Schema, DecodeError}};
+use zeon::{meta::{ByteRepr, Commit, CommitPtr, CommitIndexItem}, types::{Value, Schema, DecodeError}};
 
 pub type Hash = [u8; 32];
 
 macros::error_enum! {
     #[derive(Debug)]
-    Error {
+    pub enum Error {
+        IndexIo(std::io::Error),
+        ContentIo(std::io::Error),
         Ident(u32, u32),
         Unorder(CommitPtr, CommitPtr),
         Hash(Hash, Hash),
-        IndexIo(std::io::Error),
-        ContentIo(std::io::Error),
         Duplicate(CommitPtr),
         // Seek(u64, u64),
     } convert {

@@ -1,4 +1,7 @@
-macros::bin_struct! {
+pub use byterepr::{self, ByteRepr};
+use byterepr::*;
+
+byterepr_struct! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Timestamp {
         pub secs: i64,
@@ -6,7 +9,7 @@ macros::bin_struct! {
     }
 }
 
-macros::bin_struct! {
+byterepr_struct! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct ObjectPtr {
         pub ot: u16,
