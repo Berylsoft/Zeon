@@ -99,6 +99,18 @@ pub fn usize_u64(n: usize) -> u64 {
     n.try_into().expect("FATAL: usize length to u64 error")
 }
 
+macro_rules! assert_none {
+    ($expr:expr) => {
+        assert!(matches!($expr, None))
+    };
+}
+
+pub fn insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collections::BTreeMap<K, V>) {
+    for (k, v) in vec {
+        assert_none!(map.insert(k, v));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
