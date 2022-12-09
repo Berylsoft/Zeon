@@ -14,14 +14,14 @@ impl<'a> Reader<'a> {
 
     #[inline]
     fn bytes(&mut self, sz: usize) -> Result<Vec<u8>> {
-        let mut buf = vec![0u8; sz];
+        let mut buf = vec![0; sz];
         self.bytes.read_exact(&mut buf)?;
         Ok(buf)
     }
 
     #[inline]
     fn bytes_sized<const N: usize>(&mut self) -> Result<[u8; N]> {
-        let mut buf = [0u8; N];
+        let mut buf = [0; N];
         self.bytes.read_exact(&mut buf)?;
         Ok(buf)
     }
@@ -147,7 +147,7 @@ impl<'a> Reader<'a> {
 
     fn with_fvar(&mut self, l4: u8) -> Result<u64> {
         assert!(l4 <= 8);
-        let mut buf = [0u8; 8];
+        let mut buf = [0; 8];
         self.bytes.read_exact(&mut buf[0..l4 as usize])?;
         Ok(u64::from_be_bytes(buf))
     }

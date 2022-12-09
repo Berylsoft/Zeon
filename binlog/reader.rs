@@ -9,21 +9,21 @@ macro_rules! check {
 }
 
 async fn index_check_ident<F: AsyncRead + Unpin>(f: &mut F) -> Result<()> {
-    let mut buf = [0u8; 4];
+    let mut buf = [0; 4];
     f.read_exact(&mut buf).await.map_err(Error::IndexIo)?;
     check!(u32::from_be_bytes(buf), BS_IDENT_INDEX, Ident);
     Ok(())
 }
 
 async fn content_check_ident<F: AsyncRead + Unpin>(f: &mut F) -> Result<()> {
-    let mut buf = [0u8; 4];
+    let mut buf = [0; 4];
     f.read_exact(&mut buf).await.map_err(Error::ContentIo)?;
     check!(u32::from_be_bytes(buf), BS_IDENT_CONTENT, Ident);
     Ok(())
 }
 
 async fn index_read_index<F: AsyncRead + Unpin>(f: &mut F) -> Option<Result<CommitIndexItem>> {
-    let mut buf = [0u8; CommitIndexItem::SIZE];
+    let mut buf = [0; CommitIndexItem::SIZE];
     match f.read_exact(&mut buf).await {
         Ok(()) => Some(Ok(CommitIndexItem::from_bytes(buf))),
         Err(err) => {
@@ -37,7 +37,7 @@ async fn index_read_index<F: AsyncRead + Unpin>(f: &mut F) -> Option<Result<Comm
 }
 
 async fn content_read_commit<F: AsyncRead + Unpin>(f: &mut F, CommitIndexItem { ptr, len, hash }: CommitIndexItem) -> Result<(Commit, Hash)> {
-    let mut content = vec![0u8; zeon::util::u64_usize(len)];
+    let mut content = vec![0; zeon::util::u64_usize(len)];
     f.read_exact(&mut content).await.map_err(Error::ContentIo)?;
     let _hash = zeon::util::shake256(&content);
     check!(hash, _hash, Hash);

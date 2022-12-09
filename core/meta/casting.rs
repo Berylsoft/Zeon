@@ -90,7 +90,7 @@ impl ByteRepr for TypePtr {
     }
 
     fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
+        let mut buf = [0; Self::SIZE];
         match self {
             TypePtr::Std(stdptr) => {
                 buf[6..8].copy_from_slice(&stdptr.to_u16().to_be_bytes());
