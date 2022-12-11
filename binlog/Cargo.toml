@@ -12,6 +12,7 @@ path = "lib.rs"
 
 [features]
 reader = []
+default = ["reader"]
 
 [dependencies]
 futures-lite = "1"
