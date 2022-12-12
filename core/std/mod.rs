@@ -1,7 +1,7 @@
 #![allow(unused_macros)]
 
 use std::collections::BTreeMap;
-use crate::{types::{self, *}, meta};
+use crate::{util::*, types::{self, *}, meta};
 
 pub mod path;
 use path::StdPath;
@@ -173,14 +173,14 @@ macro_rules! def_std {
 
         const fn const_path2ptr(path: StdPath) -> u16 {
             $(if (
-                crate::util::const_str_equal(path.path, $path) &
-                crate::util::const_str_equal(path.name, $name)
+                const_str_equal(path.path, $path) &
+                const_str_equal(path.name, $name)
             ) {
                 return $stdptr
             })*
             $(if (
-                crate::util::const_str_equal(path.path, $path2) &
-                crate::util::const_str_equal(path.name, $name2)
+                const_str_equal(path.path, $path2) &
+                const_str_equal(path.name, $name2)
             ) {
                 return $stdptr2
             })*

@@ -1,5 +1,6 @@
-use super::*;
 use std::io::Read;
+use crate::util::*;
+use super::*;
 
 type Result<T> = DecodeResult<T>;
 
@@ -138,11 +139,11 @@ impl<'a> Reader<'a> {
     }
 
     fn with_ivar(&mut self, l4: u8) -> Result<i64> {
-        Ok(crate::util::zigzag_decode(self.with_uvar(l4)?))
+        Ok(zigzag_decode(self.with_uvar(l4)?))
     }
 
     fn with_szvar(&mut self, l4: u8) -> Result<usize> {
-        Ok(crate::util::u64_usize(self.with_uvar(l4)?))
+        Ok(u64_usize(self.with_uvar(l4)?))
     }
 
     fn with_fvar(&mut self, l4: u8) -> Result<u64> {
@@ -172,7 +173,7 @@ impl<'a> Reader<'a> {
     }
 
     fn val(&mut self) -> Result<Value> {
-        let (htag, l4) = crate::util::to_h4l4(self.u8()?);
+        let (htag, l4) = to_h4l4(self.u8()?);
         Ok(match htag.try_into()? {
             HTag::L4 => {
                 let ltag = self.with_ltag(l4)?;

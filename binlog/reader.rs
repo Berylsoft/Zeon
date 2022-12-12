@@ -37,9 +37,9 @@ async fn index_read_index<F: AsyncRead + Unpin>(f: &mut F) -> Option<Result<Comm
 }
 
 async fn content_read_commit<F: AsyncRead + Unpin>(f: &mut F, CommitIndexItem { ptr, len, hash }: CommitIndexItem) -> Result<(Commit, Hash)> {
-    let mut content = vec![0; zeon::util::u64_usize(len)];
+    let mut content = vec![0; u64_usize(len)];
     f.read_exact(&mut content).await.map_err(Error::ContentIo)?;
-    let _hash = zeon::util::shake256(&content);
+    let _hash = shake256_once(&content);
     check!(hash, _hash, Hash);
     let commit = Commit::deserialize(Value::decode(&content)?);
     check!(ptr, commit.ptr, Unorder);

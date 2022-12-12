@@ -1,4 +1,4 @@
-pub fn shake256<const N: usize>(bytes: &[u8]) -> [u8; N] {
+pub fn shake256_once<const N: usize>(bytes: &[u8]) -> [u8; N] {
     use tiny_keccak::{Shake, Hasher, Xof};
     let mut hasher = Shake::v256();
     hasher.update(bytes);
@@ -7,6 +7,7 @@ pub fn shake256<const N: usize>(bytes: &[u8]) -> [u8; N] {
     res
 }
 
+#[inline]
 pub fn now_raw() -> std::time::Duration {
     use std::time::{SystemTime, UNIX_EPOCH};
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap()
@@ -34,11 +35,13 @@ pub const fn to_h4l4(n: u8) -> (u8, u8) {
     (n >> 4, n & 0xF)
 }
 
+#[inline]
 pub const fn check_stdptr(n: u16) -> bool {
     let h8 = n >> 8;
     h8 != 0xFF
 }
 
+#[inline]
 pub fn to_snake_case(path: &str) -> String {
     path.replace('-', "_")
 }
@@ -105,7 +108,7 @@ macro_rules! assert_none {
     };
 }
 
-pub fn insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collections::BTreeMap<K, V>) {
+pub fn btreemap_insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collections::BTreeMap<K, V>) {
     for (k, v) in vec {
         assert_none!(map.insert(k, v));
     }

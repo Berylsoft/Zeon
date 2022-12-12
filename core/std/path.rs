@@ -1,14 +1,16 @@
+use crate::util::*;
+
 pub fn parts_to_path(s: &str, p: &str, n: &str) -> String {
     macros::concat_string!(s, ":", p, ":", n)
 }
 
 pub fn to_rust_name(n: &str) -> String {
-    crate::util::to_pascal_case(n)
+    to_pascal_case(n)
 }
 
 pub fn to_rust_path(p: &str) -> String {
     // TODO prevent keywords
-    crate::util::to_snake_case(p).replace(':', "_")
+    to_snake_case(p).replace(':', "_")
 }
 
 pub fn parts_to_rust_path(root: &str, p: &str, n: &str) -> String {

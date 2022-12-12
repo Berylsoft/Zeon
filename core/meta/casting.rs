@@ -1,10 +1,11 @@
+use crate::util::*;
 use super::*;
 
 impl Timestamp {
     pub const EPOCH_AFTER_UNIX_EPOCH_SEC: i64 = 978307200;
 
     pub fn now() -> Timestamp {
-        let dur = crate::util::now_raw();
+        let dur = now_raw();
         assert!(dur.as_secs() <= i64::MAX as _);
         Timestamp {
             secs: dur.as_secs() as i64 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
@@ -26,7 +27,7 @@ impl Timestamp {
 
 impl TypePtr {
     pub const fn from_u16(n: u16) -> TypePtr {
-        assert!(crate::util::check_stdptr(n));
+        assert!(check_stdptr(n));
         TypePtr::Std(StdPtr(n))
     }
 
@@ -35,7 +36,7 @@ impl TypePtr {
     }
 
     pub fn from_path(path: &str) -> TypePtr {
-        TypePtr::Hash(crate::util::shake256(path.as_bytes()))
+        TypePtr::Hash(shake256_once(path.as_bytes()))
     }
 
     pub const fn as_std(self) -> Option<StdPtr> {
@@ -62,7 +63,7 @@ impl TypePtr {
 
 impl StdPtr {
     pub const fn from_u16(n: u16) -> StdPtr {
-        assert!(crate::util::check_stdptr(n));
+        assert!(check_stdptr(n));
         StdPtr(n)
     }
 
@@ -153,7 +154,7 @@ mod test {
         let index = CommitIndexItem {
             ptr: ptr.clone(),
             len: 0,
-            hash: crate::util::shake256(&[]),
+            hash: shake256_once(&[]),
         };
     
         case!(

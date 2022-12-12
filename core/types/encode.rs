@@ -1,3 +1,4 @@
+use crate::util::*;
 use super::*;
 
 struct Writer {
@@ -109,7 +110,7 @@ impl Writer {
 
     #[inline]
     fn with_l4(&mut self, htag: HTag, l: u8) {
-        self.u8(crate::util::from_h4l4(htag as u8, l));
+        self.u8(from_h4l4(htag as u8, l));
     }
 
     fn with_ltag(&mut self, htag: HTag, l: LTag) {
@@ -135,15 +136,15 @@ impl Writer {
     }
 
     fn with_ivar(&mut self, htag: HTag, i: i64) {
-        self.with_uvar(htag, crate::util::zigzag_encode(i))
+        self.with_uvar(htag, zigzag_encode(i))
     }
 
     fn with_szvar(&mut self, htag: HTag, sz: usize) {
-        self.with_uvar(htag, crate::util::usize_u64(sz))
+        self.with_uvar(htag, usize_u64(sz))
     }
 
     fn with_fvar(&mut self, htag: HTag, f: u64) {
-        let len = crate::util::float_find_zero(f);
+        let len = float_find_zero(f);
         self.with_l4(htag, len as u8);
         let buf = f.to_be_bytes();
         self.bytes(&buf[0..len]);

@@ -5,7 +5,7 @@ pub const BS_IDENT_CONTENT: u32 = 0x42650200;
 
 use std::{io, marker::Unpin};
 use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt};
-use zeon::{meta::{ByteRepr, Commit, CommitPtr, CommitIndexItem}, types::{Value, Schema, DecodeError}};
+use zeon::{util::*, meta::{ByteRepr, Commit, CommitPtr, CommitIndexItem}, types::{Value, Schema, DecodeError}};
 
 pub type Hash = [u8; 32];
 
@@ -41,8 +41,8 @@ impl<F: AsyncWrite + Unpin> Writer<F> {
     pub async fn write_commit(&mut self, commit: Commit) -> Result<()> {
         let ptr = commit.ptr.clone();
         let content = commit.serialize().encode();
-        let len = zeon::util::usize_u64(content.len());
-        let hash = zeon::util::shake256(&content);
+        let len = usize_u64(content.len());
+        let hash = shake256_once(&content);
         let index = CommitIndexItem { ptr, len, hash }.to_bytes();
         self.content.write_all(&content).await.map_err(Error::ContentIo)?;
         self.content.flush().await.map_err(Error::ContentIo)?;
