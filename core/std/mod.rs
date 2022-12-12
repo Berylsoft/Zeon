@@ -233,7 +233,7 @@ def_std! {
             "iter-list-add"    -> list!(Unknown)
             "iter-set-add"     -> list!(Unknown)
             "iter-set-remove"  -> list!(Unknown)
-            "complex"          -> ref_struct!(:"meta" :"complex-rev")
+            // "complex"          -> ref_struct!(:"meta" :"complex-rev")
         }
         0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
             "object"     -> ObjectPtr
@@ -258,10 +258,7 @@ def_std! {
             "attr-name" -> String /* simple-name */
             "parent"    -> option!(TypePtr)
         }
-        0x000C | std :"meta" :"complex-rev" -> def_struct! {
-            /* reserved */
-        }
-        0x000D | std :"meta" :"state-rev-ptr" -> def_struct! {
+        0x000C | std :"meta" :"state-rev-ptr" -> def_struct! {
             "object"     -> ObjectPtr
             "trait-type" -> TypePtr
             "state-attr" -> UInt8

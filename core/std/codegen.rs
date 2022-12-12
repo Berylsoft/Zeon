@@ -314,7 +314,6 @@ pub mod meta {
         IterListAdd(Vec<Value>),
         IterSetAdd(Vec<Value>),
         IterSetRemove(Vec<Value>),
-        Complex(super::meta::ComplexRev),
     }
     impl Schema for Rev {
         const PTR: TypePtr = TypePtr::from_u16_unchecked(6);
@@ -327,7 +326,6 @@ pub mod meta {
                     Self::IterListAdd(_) => 2,
                     Self::IterSetAdd(_) => 3,
                     Self::IterSetRemove(_) => 4,
-                    Self::Complex(_) => 5,
                 },
                 Box::new(
                     match self {
@@ -351,7 +349,6 @@ pub mod meta {
                                 val.into_iter().map(|sv| sv).collect(),
                             )
                         }
-                        Self::Complex(val) => val.serialize(),
                     },
                 ),
             )
@@ -370,7 +367,6 @@ pub mod meta {
                         val.into_list().into_iter().map(|sv| sv).collect(),
                     )
                 }
-                5 => Self::Complex(val.deserialize_into()),
                 _ => unreachable!(),
             }
         }
@@ -463,29 +459,16 @@ pub mod meta {
         }
     }
     #[derive(Clone, Debug, PartialEq, Eq)]
-    pub struct ComplexRev {}
-    impl Schema for ComplexRev {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(12);
-        fn serialize(self) -> Value {
-            Value::Struct(TypePtr::from_u16_unchecked(12), vec![])
-        }
-        fn deserialize(val: Value) -> Self {
-            let []: [Value; 0usize] = val.into_struct().try_into().unwrap();
-            Self {}
-        }
-    }
-    #[derive(Clone, Debug, PartialEq, Eq)]
-    #[derive(PartialOrd, Ord)]
     pub struct StateRevPtr {
         pub object: ObjectPtr,
         pub trait_type: TypePtr,
         pub state_attr: u8,
     }
     impl Schema for StateRevPtr {
-        const PTR: TypePtr = TypePtr::from_u16_unchecked(13);
+        const PTR: TypePtr = TypePtr::from_u16_unchecked(12);
         fn serialize(self) -> Value {
             Value::Struct(
-                TypePtr::from_u16_unchecked(13),
+                TypePtr::from_u16_unchecked(12),
                 vec![
                     Value::ObjectPtr(self.object), Value::TypePtr(self.trait_type),
                     Value::UInt8(self.state_attr),
