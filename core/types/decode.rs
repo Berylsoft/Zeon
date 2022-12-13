@@ -147,7 +147,7 @@ impl<'a> Reader<'a> {
     }
 
     fn with_fvar(&mut self, l4: u8) -> Result<u64> {
-        assert!(l4 <= 8);
+        if l4 > 8 { return Err(DecodeError::FloatL4(l4)); }
         let mut buf = [0; 8];
         self.bytes.read_exact(&mut buf[0..l4 as usize])?;
         Ok(u64::from_be_bytes(buf))

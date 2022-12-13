@@ -140,7 +140,9 @@ pub(self) const EXT64: u8 = 0xF;
 
 macros::error_enum! {
     #[derive(Debug)]
-    pub enum DecodeError {} convert {
+    pub enum DecodeError {
+        FloatL4(u8),
+    } convert {
         Io => std::io::Error,
         Utf8 => std::string::FromUtf8Error,
         Tag => num_enum::TryFromPrimitiveError<Tag>,

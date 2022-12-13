@@ -238,7 +238,7 @@ def_std! {
         0x0007 | std :"meta" :"rev-ptr" -> def_struct! {
             "object"     -> ObjectPtr
             "trait-type" -> TypePtr
-            "attr"       -> UInt8
+            "attr"       -> UInt8 /* trait-attr-id */
         }
         0x0008 | std :"meta" :"commit-ptr" -> def_struct! {
             "ts"  -> Timestamp
@@ -261,7 +261,7 @@ def_std! {
         0x000C | std :"meta" :"state-rev-ptr" -> def_struct! {
             "object"     -> ObjectPtr
             "trait-type" -> TypePtr
-            "state-attr" -> UInt8
+            "state-attr" -> UInt8 /* trait-attr-id */
         }
     }
     traits {
