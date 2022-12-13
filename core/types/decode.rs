@@ -192,12 +192,12 @@ impl<'a> Reader<'a> {
                     LTag::Unit => Value::Unit,
                     LTag::True => Value::Bool(true),
                     LTag::False => Value::Bool(false),
-                    LTag::None | LTag::Some => {
+                    opt @ (LTag::None | LTag::Some) => {
                         let t = self.ty()?;
-                        let opt = match ltag {
-                            LTag::Some => Some(self.val()?),
+                        let opt = match opt {
                             LTag::None => None,
-                            _ => unreachable!(),
+                            LTag::Some => Some(self.val()?),
+                            _ => unreachable!(), // waiting for flow-sensitive typing implemented
                         };
                         Value::Option(t, Box::new(opt))
                     },
