@@ -23,7 +23,7 @@ pub enum Tag {
     CEnum,     // 0x0D
     Enum,      // 0x0E
     Struct,    // 0x0F
-    Type,      // 0x00
+    Type,      // 0x10
     TypePtr,   // 0x11
     ObjectPtr, // 0x12
     Timestamp, // 0x13
