@@ -114,37 +114,54 @@ pub fn btreemap_insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collectio
     }
 }
 
-// Originally copied from std impl Read::read_exact for &[u8]
-pub fn read_from_bytes(src: &mut &[u8], buf: &mut [u8]) -> Result<(), (usize, usize)> {
-    if buf.len() > src.len() {
-        return Err((src.len(), buf.len()));
-    }
-    let (a, b) = src.split_at(buf.len());
-
-    // First check if the amount of bytes we want to read is small:
-    // `copy_from_slice` will generally expand to a call to `memcpy`, and
-    // for a single byte the overhead is significant.
-    if buf.len() == 1 {
-        buf[0] = a[0];
-    } else {
-        buf.copy_from_slice(a);
-    }
-
-    *src = b;
-    Ok(())
+pub trait BytesRead<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<(), (usize, usize)>;
+    fn steal(&mut self, sz: usize) -> Result<&'a [u8], (usize, usize)>;
+    fn read_byte(&mut self) -> Option<u8>;
 }
 
 // Originally copied from std impl Read::read_exact for &[u8]
-pub fn read_byte_from_bytes(src: &mut &[u8]) -> Option<u8> {
-    if src.is_empty() /* 1 > src.len() */ {
-        return None /* Err((0, 1)) */;
+impl<'a> BytesRead<'a> for &'a [u8] {
+    fn read(&mut self, buf: &mut [u8]) -> Result<(), (usize, usize)> {
+        if buf.len() > self.len() {
+            return Err((self.len(), buf.len()));
+        }
+        let (a, b) = self.split_at(buf.len());
+
+        // First check if the amount of bytes we want to read is small:
+        // `copy_from_slice` will generally expand to a call to `memcpy`, and
+        // for a single byte the overhead is significant.
+        if buf.len() == 1 {
+            buf[0] = a[0];
+        } else {
+            buf.copy_from_slice(a);
+        }
+
+        *self = b;
+        Ok(())
     }
-    let (a, b) = src.split_at(1);
 
-    let byte = a[0];
+    fn steal(&mut self, sz: usize) -> Result<&'a [u8], (usize, usize)> {
+        if sz > self.len() {
+            return Err((self.len(), sz));
+        }
+        let (a, b) = self.split_at(sz);
 
-    *src = b;
-    Some(byte)
+        *self = b;
+        Ok(a)
+    }
+
+    fn read_byte(&mut self) -> Option<u8> {
+        if self.is_empty() /* 1 > self.len() */ {
+            return None /* Err((0, 1)) */;
+        }
+        let (a, b) = self.split_at(1);
+
+        let byte = a[0];
+
+        *self = b;
+        Some(byte)
+    }
 }
 
 #[cfg(test)]

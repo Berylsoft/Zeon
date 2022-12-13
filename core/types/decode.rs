@@ -22,7 +22,7 @@ impl<'a> Reader<'a> {
 
     #[inline]
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        read_from_bytes(&mut self.bytes, buf).map_err(DecodeError::TooShort)
+        self.bytes.read(buf).map_err(DecodeError::TooShort)
     }
 
     #[inline]
@@ -40,7 +40,7 @@ impl<'a> Reader<'a> {
     }
 
     fn u8(&mut self) -> Result<u8> {
-        read_byte_from_bytes(&mut self.bytes).ok_or(DecodeError::TooShort((0, 1)))
+        self.bytes.read_byte().ok_or(DecodeError::TooShort((0, 1)))
     }
 
     fn u16(&mut self) -> Result<u16> {
