@@ -27,16 +27,12 @@ impl<'a> Reader<'a> {
 
     #[inline]
     fn bytes(&mut self, sz: usize) -> Result<Vec<u8>> {
-        let mut buf = vec![0; sz];
-        self.read_exact(&mut buf)?;
-        Ok(buf)
+        self.bytes.read_to_vec(sz).map_err(DecodeError::TooShort)
     }
 
     #[inline]
     fn bytes_sized<const N: usize>(&mut self) -> Result<[u8; N]> {
-        let mut buf = [0; N];
-        self.read_exact(&mut buf)?;
-        Ok(buf)
+        self.bytes.read_to_array().map_err(DecodeError::TooShort)
     }
 
     fn u8(&mut self) -> Result<u8> {

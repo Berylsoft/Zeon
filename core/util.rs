@@ -114,15 +114,40 @@ pub fn btreemap_insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collectio
     }
 }
 
+#[inline]
+pub const unsafe fn slice_to_array_unchecked<T, const N: usize>(slice: &[T]) -> &[T; N] {
+    let ptr = slice.as_ptr() as *const [T; N];
+    // SAFETY: this is a unchecked function
+    unsafe { &*ptr }
+}
+
+type BytesReadResult<T> = Result<T, (usize, usize)>;
+
 pub trait BytesRead<'a> {
-    fn read(&mut self, buf: &mut [u8]) -> Result<(), (usize, usize)>;
-    fn steal(&mut self, sz: usize) -> Result<&'a [u8], (usize, usize)>;
+    fn read(&mut self, buf: &mut [u8]) -> BytesReadResult<()>;
+    fn steal(&mut self, sz: usize) -> BytesReadResult<&'a [u8]>;
     fn read_byte(&mut self) -> Option<u8>;
+
+    #[inline]
+    fn steal_array<const N: usize>(&mut self) -> BytesReadResult<&'a [u8; N]> {
+        // SAFETY: we just stealed a slice with the same length
+        Ok(unsafe { slice_to_array_unchecked(self.steal(N)?) })
+    }
+
+    #[inline]
+    fn read_to_array<const N: usize>(&mut self) -> BytesReadResult<[u8; N]> {
+        Ok(*self.steal_array()?)
+    }
+
+    #[inline]
+    fn read_to_vec(&mut self, sz: usize) -> BytesReadResult<Vec<u8>> {
+        Ok(self.steal(sz)?.to_vec())
+    }
 }
 
 // Originally copied from std impl Read::read_exact for &[u8]
 impl<'a> BytesRead<'a> for &'a [u8] {
-    fn read(&mut self, buf: &mut [u8]) -> Result<(), (usize, usize)> {
+    fn read(&mut self, buf: &mut [u8]) -> BytesReadResult<()> {
         if buf.len() > self.len() {
             return Err((self.len(), buf.len()));
         }
@@ -141,7 +166,7 @@ impl<'a> BytesRead<'a> for &'a [u8] {
         Ok(())
     }
 
-    fn steal(&mut self, sz: usize) -> Result<&'a [u8], (usize, usize)> {
+    fn steal(&mut self, sz: usize) -> BytesReadResult<&'a [u8]> {
         if sz > self.len() {
             return Err((self.len(), sz));
         }
