@@ -114,6 +114,39 @@ pub fn btreemap_insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collectio
     }
 }
 
+// Originally copied from std impl Read::read_exact for &[u8]
+pub fn read_from_bytes(src: &mut &[u8], buf: &mut [u8]) -> Result<(), (usize, usize)> {
+    if buf.len() > src.len() {
+        return Err((src.len(), buf.len()));
+    }
+    let (a, b) = src.split_at(buf.len());
+
+    // First check if the amount of bytes we want to read is small:
+    // `copy_from_slice` will generally expand to a call to `memcpy`, and
+    // for a single byte the overhead is significant.
+    if buf.len() == 1 {
+        buf[0] = a[0];
+    } else {
+        buf.copy_from_slice(a);
+    }
+
+    *src = b;
+    Ok(())
+}
+
+// Originally copied from std impl Read::read_exact for &[u8]
+pub fn read_byte_from_bytes(src: &mut &[u8]) -> Option<u8> {
+    if src.is_empty() /* 1 > src.len() */ {
+        return None /* Err((0, 1)) */;
+    }
+    let (a, b) = src.split_at(1);
+
+    let byte = a[0];
+
+    *src = b;
+    Some(byte)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

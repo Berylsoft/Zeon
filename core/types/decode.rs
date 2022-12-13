@@ -1,4 +1,3 @@
-use std::io::Read;
 use crate::util::*;
 use super::*;
 
@@ -13,23 +12,35 @@ impl<'a> Reader<'a> {
         Reader { bytes }
     }
 
+    fn finish(self) -> Result<()> {
+        if self.bytes.is_empty() {
+            Ok(())
+        } else {
+            Err(DecodeError::TooLong(self.bytes.len()))
+        }
+    }
+
+    #[inline]
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        read_from_bytes(&mut self.bytes, buf).map_err(DecodeError::TooShort)
+    }
+
     #[inline]
     fn bytes(&mut self, sz: usize) -> Result<Vec<u8>> {
         let mut buf = vec![0; sz];
-        self.bytes.read_exact(&mut buf)?;
+        self.read_exact(&mut buf)?;
         Ok(buf)
     }
 
     #[inline]
     fn bytes_sized<const N: usize>(&mut self) -> Result<[u8; N]> {
         let mut buf = [0; N];
-        self.bytes.read_exact(&mut buf)?;
+        self.read_exact(&mut buf)?;
         Ok(buf)
     }
 
     fn u8(&mut self) -> Result<u8> {
-        let [b] = self.bytes_sized()?;
-        Ok(b)
+        read_byte_from_bytes(&mut self.bytes).ok_or(DecodeError::TooShort((0, 1)))
     }
 
     fn u16(&mut self) -> Result<u16> {
@@ -149,7 +160,7 @@ impl<'a> Reader<'a> {
     fn with_fvar(&mut self, l4: u8) -> Result<u64> {
         if l4 > 8 { return Err(DecodeError::FloatL4(l4)); }
         let mut buf = [0; 8];
-        self.bytes.read_exact(&mut buf[0..l4 as usize])?;
+        self.read_exact(&mut buf[0..l4 as usize])?;
         Ok(u64::from_be_bytes(buf))
     }
 
@@ -291,6 +302,8 @@ impl<'a> Reader<'a> {
 impl Value {
     pub fn decode(buf: &[u8]) -> Result<Value> {
         let mut reader = Reader::new(buf);
-        reader.val()
+        let val = reader.val()?;
+        reader.finish()?;
+        Ok(val)
     }
 }

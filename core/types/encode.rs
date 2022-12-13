@@ -20,11 +20,6 @@ impl Writer {
         self.bytes.extend_from_slice(bytes.as_ref());
     }
 
-    // #[inline]
-    // fn bytes_sized<const N: usize>(&mut self, bytes: [u8; N]) {
-    //     self.bytes.extend_from_slice(bytes.as_slice());
-    // }
-
     #[inline]
     fn u8(&mut self, n: u8) {
         self.bytes.push(n);

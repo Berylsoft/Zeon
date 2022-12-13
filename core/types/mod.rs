@@ -142,8 +142,9 @@ macros::error_enum! {
     #[derive(Debug)]
     pub enum DecodeError {
         FloatL4(u8),
+        TooShort((usize, usize)),
+        TooLong(usize),
     } convert {
-        Io => std::io::Error,
         Utf8 => std::string::FromUtf8Error,
         Tag => num_enum::TryFromPrimitiveError<Tag>,
         HTag => num_enum::TryFromPrimitiveError<HTag>,
