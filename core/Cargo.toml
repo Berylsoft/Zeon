@@ -11,7 +11,6 @@ name = "zeon"
 path = "lib.rs"
 
 [dependencies]
-num_enum = "0.5"
 foundations = { path = "../../foundations", default-features = false, features = [
     "now",
     "usize-casting",
@@ -24,6 +23,7 @@ foundations = { path = "../../foundations", default-features = false, features =
 
     "concat-string",
     "error-enum",
+    "num-enum",
     "byterepr-macros",
 ] }
 

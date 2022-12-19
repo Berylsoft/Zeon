@@ -1,71 +1,71 @@
-use foundations::error_enum;
+use foundations::{error_enum, num_enum};
 use crate::meta::{Timestamp, ObjectPtr, TypePtr};
 
 pub type EnumVariantId = u64;
 pub type TupleItemId = u8;
 pub type TraitAttrId = u8;
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
-pub enum Tag {
-    Unknown     = 0x00,
-    Unit,      // 0x01
-    Bool,      // 0x02
-    Int,       // 0x03
-    UInt,      // 0x04
-    Float,     // 0x05
-    String,    // 0x06
-    Bytes,     // 0x07
-    Option,    // 0x08
-    List,      // 0x09
-    Map,       // 0x0A
-    Tuple,     // 0x0B
-    Alias,     // 0x0C
-    CEnum,     // 0x0D
-    Enum,      // 0x0E
-    Struct,    // 0x0F
-    Type,      // 0x10
-    TypePtr,   // 0x11
-    ObjectPtr, // 0x12
-    Timestamp, // 0x13
-    UInt8,     // 0x14
-    UInt16,    // 0x15
-    UInt32,    // 0x16
+num_enum! {
+    pub enum Tag {
+        Unknown   = 0x00,
+        Unit      = 0x01,
+        Bool      = 0x02,
+        Int       = 0x03,
+        UInt      = 0x04,
+        Float     = 0x05,
+        String    = 0x06,
+        Bytes     = 0x07,
+        Option    = 0x08,
+        List      = 0x09,
+        Map       = 0x0A,
+        Tuple     = 0x0B,
+        Alias     = 0x0C,
+        CEnum     = 0x0D,
+        Enum      = 0x0E,
+        Struct    = 0x0F,
+        Type      = 0x10,
+        TypePtr   = 0x11,
+        ObjectPtr = 0x12,
+        Timestamp = 0x13,
+        UInt8     = 0x14,
+        UInt16    = 0x15,
+        UInt32    = 0x16,
+    } as u8 else DecodeError::Tag
 }
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
-pub enum HTag {
-    L4          = 0x0,
-    Int,       // 0x1
-    UInt,      // 0x2
-    Float,     // 0x3
-    String,    // 0x4
-    Bytes,     // 0x5
-    List,      // 0x6
-    Map,       // 0x7
-    Tuple,     // 0x8
-    CEnum,     // 0x9
-    Enum,      // 0xA
-    Struct,    // 0xB
+num_enum! {
+    pub enum HTag {
+        L4        = 0x0,
+        Int       = 0x1,
+        UInt      = 0x2,
+        Float     = 0x3,
+        String    = 0x4,
+        Bytes     = 0x5,
+        List      = 0x6,
+        Map       = 0x7,
+        Tuple     = 0x8,
+        CEnum     = 0x9,
+        Enum      = 0xA,
+        Struct    = 0xB,
+    } as u8 else DecodeError::HTag
 }
 
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, num_enum::TryFromPrimitive)]
-pub enum LTag {
-    Unit        = 0x0,
-    False,     // 0x1
-    True,      // 0x2
-    None,      // 0x3
-    Some,      // 0x4
-    Alias,     // 0x5
-    Type,      // 0x6
-    TypePtr,   // 0x7
-    ObjectPtr, // 0x8
-    Timestamp, // 0x9
-    UInt8,     // 0xA
-    UInt16,    // 0xB
-    UInt32,    // 0xC
+num_enum! {
+    pub enum LTag {
+        Unit      = 0x0,
+        False     = 0x1,
+        True      = 0x2,
+        None      = 0x3,
+        Some      = 0x4,
+        Alias     = 0x5,
+        Type      = 0x6,
+        TypePtr   = 0x7,
+        ObjectPtr = 0x8,
+        Timestamp = 0x9,
+        UInt8     = 0xA,
+        UInt16    = 0xB,
+        UInt32    = 0xC,
+    } as u8 else DecodeError::LTag
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -145,11 +145,11 @@ error_enum! {
         FloatL4(u8),
         TooShort((usize, usize)),
         TooLong(usize),
+        Tag(u8),
+        HTag(u8),
+        LTag(u8),
     } convert {
         Utf8 => std::string::FromUtf8Error,
-        Tag => num_enum::TryFromPrimitiveError<Tag>,
-        HTag => num_enum::TryFromPrimitiveError<HTag>,
-        LTag => num_enum::TryFromPrimitiveError<LTag>,
     }
 }
 
