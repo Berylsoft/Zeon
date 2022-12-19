@@ -16,5 +16,5 @@ default = ["reader"]
 
 [dependencies]
 futures-lite = "1"
-macros = { git = "https://github.com/Berylsoft/rust-macros" }
+foundations = { path = "../../foundations" }
 zeon = { path = "../core" }

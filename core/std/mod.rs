@@ -1,7 +1,8 @@
 #![allow(unused_macros)]
 
 use std::collections::BTreeMap;
-use crate::{util::*, types::{self, *}, meta};
+use foundations::const_bytes_equal::*;
+use crate::{types::{self, *}, meta};
 
 pub mod path;
 use path::StdPath;

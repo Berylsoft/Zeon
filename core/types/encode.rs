@@ -1,4 +1,4 @@
-use crate::util::*;
+use foundations::{num_compress::*, usize_casting::*};
 use super::*;
 
 struct Writer {

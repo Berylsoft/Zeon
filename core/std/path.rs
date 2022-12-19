@@ -1,4 +1,4 @@
-use crate::util::*;
+use foundations::case_convert::*;
 
 pub fn parts_to_path(s: &str, p: &str, n: &str) -> String {
     foundations::concat_string!(s, ":", p, ":", n)

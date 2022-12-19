@@ -1,4 +1,4 @@
-use crate::util::*;
+use foundations::{num_compress::*, usize_casting::*, bytes_read::*};
 use super::*;
 
 type Result<T> = DecodeResult<T>;
