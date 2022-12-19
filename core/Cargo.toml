@@ -13,8 +13,7 @@ path = "lib.rs"
 [dependencies]
 tiny-keccak = { version = "2", features = ["sha3", "shake"] }
 num_enum = "0.5"
-macros = { git = "https://github.com/Berylsoft/rust-macros" }
-byterepr = { git = "https://github.com/Berylsoft/byterepr" }
+foundations = { path = "../../foundations" }
 
 [dev-dependencies]
 hex = "*"

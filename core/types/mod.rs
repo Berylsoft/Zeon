@@ -138,7 +138,7 @@ pub(self) const EXT16: u8 = 0xD;
 pub(self) const EXT32: u8 = 0xE;
 pub(self) const EXT64: u8 = 0xF;
 
-macros::error_enum! {
+foundations::error_enum! {
     #[derive(Debug)]
     pub enum DecodeError {
         FloatL4(u8),

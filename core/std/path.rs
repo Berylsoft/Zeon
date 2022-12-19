@@ -1,7 +1,7 @@
 use crate::util::*;
 
 pub fn parts_to_path(s: &str, p: &str, n: &str) -> String {
-    macros::concat_string!(s, ":", p, ":", n)
+    foundations::concat_string!(s, ":", p, ":", n)
 }
 
 pub fn to_rust_name(n: &str) -> String {
@@ -14,7 +14,7 @@ pub fn to_rust_path(p: &str) -> String {
 }
 
 pub fn parts_to_rust_path(root: &str, p: &str, n: &str) -> String {
-    macros::concat_string!(root, "::", to_rust_path(p), "::", to_rust_name(n))
+    foundations::concat_string!(root, "::", to_rust_path(p), "::", to_rust_name(n))
 }
 
 pub fn parts_to_rust_self_path(p: &str, n: &str) -> String {

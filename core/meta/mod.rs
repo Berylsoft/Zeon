@@ -1,5 +1,5 @@
-pub use byterepr::{self, ByteRepr};
-use byterepr::*;
+pub use foundations::byterepr::{self, ByteRepr};
+use foundations::byterepr_struct;
 
 byterepr_struct! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

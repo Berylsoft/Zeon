@@ -1,5 +1,6 @@
 use crate::util::*;
 use super::*;
+use foundations::byterepr_struct_impl;
 
 impl Timestamp {
     pub const EPOCH_AFTER_UNIX_EPOCH_SEC: i64 = 978307200;
