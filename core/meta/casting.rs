@@ -11,11 +11,11 @@ impl Timestamp {
     pub const EPOCH_AFTER_UNIX_EPOCH_SEC: i64 = 978307200;
 
     pub fn now() -> Timestamp {
-        let dur = now_raw();
-        assert!(dur.as_secs() <= i64::MAX as _);
+        let (secs, nanos) = now_raw();
+        assert!(secs <= i64::MAX as _);
         Timestamp {
-            secs: dur.as_secs() as i64 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
-            nanos: dur.subsec_nanos(),
+            secs: secs as i64 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
+            nanos,
         }
     }
 
