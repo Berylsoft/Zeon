@@ -16,5 +16,10 @@ default = ["reader"]
 
 [dependencies]
 futures-lite = "1"
-foundations = { path = "../../foundations" }
+foundations = { path = "../../foundations", default-features = false, features = [
+    "usize-casting",
+    "sha3",
+
+    "error-enum",
+] }
 zeon = { path = "../core" }

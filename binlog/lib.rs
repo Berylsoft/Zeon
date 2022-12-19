@@ -5,12 +5,12 @@ pub const BS_IDENT_CONTENT: u32 = 0x42650200;
 
 use std::{io, marker::Unpin};
 use futures_lite::{AsyncWrite, AsyncWriteExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt};
-use foundations::{usize_casting::*, sha3::*};
+use foundations::{error_enum, usize_casting::*, sha3::*};
 use zeon::{meta::{ByteRepr, Commit, CommitPtr, CommitIndexItem}, types::{Value, Schema, DecodeError}};
 
 pub type Hash = [u8; 32];
 
-foundations::error_enum! {
+error_enum! {
     #[derive(Debug)]
     pub enum Error {
         IndexIo(std::io::Error),

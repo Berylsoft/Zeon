@@ -1,6 +1,6 @@
 use proc_macro2::{TokenStream, Literal};
 use quote::quote;
-use foundations::case_convert::*;
+use foundations::{concat_string, case_convert::*};
 use zeon::{types::{Type, DefType, EnumVariantId}, meta::TypePtr, std::{ptr2path, init, Std}};
 
 fn ident<S: AsRef<str>>(s: S) -> TokenStream {
@@ -349,7 +349,7 @@ fn derive_def(ptr: u16, dt: DefType) -> TokenStream {
             let names = names.into_iter().map(|name| ident(to_snake_case(&name)));
             let names2 = names.clone();
             let names3 = names.clone();
-            let sers = fields.clone().into_iter().map(|(name, ty)| type2ser(ty, ident(foundations::concat_string!("self.", to_snake_case(&name)))));
+            let sers = fields.clone().into_iter().map(|(name, ty)| type2ser(ty, ident(concat_string!("self.", to_snake_case(&name)))));
             let des = fields.into_iter().map(|(name, ty)| type2de(ty, ident(to_snake_case(&name))));
             let tys = tys.into_iter().map(type2type);
 

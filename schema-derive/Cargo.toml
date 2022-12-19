@@ -17,5 +17,9 @@ syn = { version = "1", features = ["full"] }
 prettyplease = "*"
 hex = "*"
 indexmap = "*"
-foundations = { path = "../../foundations" }
+foundations = { path = "../../foundations", default-features = false, features = [
+    "case-convert",
+
+    "concat-string",
+] }
 zeon = { path = "../core" }

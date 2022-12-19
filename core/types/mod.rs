@@ -1,3 +1,4 @@
+use foundations::error_enum;
 use crate::meta::{Timestamp, ObjectPtr, TypePtr};
 
 pub type EnumVariantId = u64;
@@ -138,7 +139,7 @@ pub(self) const EXT16: u8 = 0xD;
 pub(self) const EXT32: u8 = 0xE;
 pub(self) const EXT64: u8 = 0xF;
 
-foundations::error_enum! {
+error_enum! {
     #[derive(Debug)]
     pub enum DecodeError {
         FloatL4(u8),

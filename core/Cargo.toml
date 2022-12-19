@@ -12,7 +12,20 @@ path = "lib.rs"
 
 [dependencies]
 num_enum = "0.5"
-foundations = { path = "../../foundations" }
+foundations = { path = "../../foundations", default-features = false, features = [
+    "now",
+    "usize-casting",
+    "byterepr",
+    "bytes-read",
+    "num-compress",
+    "case-convert",
+    "const-bytes-equal",
+    "sha3",
+
+    "concat-string",
+    "error-enum",
+    "byterepr-macros",
+] }
 
 [dev-dependencies]
 hex = "*"
