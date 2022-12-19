@@ -1,6 +1,11 @@
-use crate::util::*;
 use super::*;
-use foundations::{byterepr_struct_impl, now::*};
+use foundations::{byterepr_struct_impl, now::*, sha3::*};
+
+#[inline]
+pub const fn check_raw_stdptr(n: u16) -> bool {
+    let h8 = n >> 8;
+    h8 != 0xFF
+}
 
 impl Timestamp {
     pub const EPOCH_AFTER_UNIX_EPOCH_SEC: i64 = 978307200;
@@ -28,7 +33,7 @@ impl Timestamp {
 
 impl TypePtr {
     pub const fn from_u16(n: u16) -> TypePtr {
-        assert!(check_stdptr(n));
+        assert!(check_raw_stdptr(n));
         TypePtr::Std(StdPtr(n))
     }
 
@@ -64,7 +69,7 @@ impl TypePtr {
 
 impl StdPtr {
     pub const fn from_u16(n: u16) -> StdPtr {
-        assert!(check_stdptr(n));
+        assert!(check_raw_stdptr(n));
         StdPtr(n)
     }
 
