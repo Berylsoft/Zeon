@@ -24,14 +24,3 @@ pub fn btreemap_insert_all<K: Ord, V>(vec: Vec<(K, V)>, map: &mut std::collectio
         assert_none!(map.insert(k, v));
     }
 }
-
-/// # Safety
-/// 
-/// This is an unchecked function. The caller needs to ensure that the length of the input slice
-/// and the length of the output array (`N`) are the same.
-#[inline]
-pub const unsafe fn slice_to_array_unchecked<T, const N: usize>(slice: &[T]) -> &[T; N] {
-    let ptr = slice.as_ptr() as *const [T; N];
-    // SAFETY: this is a unchecked function
-    unsafe { &*ptr }
-}

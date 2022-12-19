@@ -85,11 +85,9 @@ impl ByteRepr for TypePtr {
 
     fn from_bytes(raw: [u8; Self::SIZE]) -> Self {
         if raw[0] == 0xFF {
-            // SAFETY: const range slicing
-            TypePtr::Hash(*unsafe { slice_to_array_unchecked(&raw[1..7]) })
+            TypePtr::Hash(raw[1..7].try_into().unwrap())
         } else {
-            // SAFETY: const range slicing
-            TypePtr::Std(StdPtr::from_u16(u16::from_be_bytes(*unsafe { slice_to_array_unchecked(&raw[6..7]) })))
+            TypePtr::Std(StdPtr::from_u16(u16::from_be_bytes(raw[6..7].try_into().unwrap())))
         }
     }
 
