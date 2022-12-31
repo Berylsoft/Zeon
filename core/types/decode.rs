@@ -40,19 +40,19 @@ impl<'a> Reader<'a> {
     }
 
     fn u16(&mut self) -> Result<u16> {
-        Ok(u16::from_be_bytes(self.bytes_sized()?))
+        self.bytes_sized().map(u16::from_be_bytes)
     }
 
     fn u32(&mut self) -> Result<u32> {
-        Ok(u32::from_be_bytes(self.bytes_sized()?))
+        self.bytes_sized().map(u32::from_be_bytes)
     }
 
     fn u64(&mut self) -> Result<u64> {
-        Ok(u64::from_be_bytes(self.bytes_sized()?))
+        self.bytes_sized().map(u64::from_be_bytes)
     }
 
     fn i64(&mut self) -> Result<i64> {
-        Ok(i64::from_be_bytes(self.bytes_sized()?))
+        self.bytes_sized().map(i64::from_be_bytes)
     }
 
     fn typeptr(&mut self) -> Result<TypePtr> {

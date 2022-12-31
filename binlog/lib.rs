@@ -46,9 +46,9 @@ impl<F: AsyncWrite + Unpin> Writer<F> {
         let hash = shake256_once(&content);
         let index = CommitIndexItem { ptr, len, hash }.to_bytes();
         self.content.write_all(&content).await.map_err(Error::ContentIo)?;
-        self.content.flush().await.map_err(Error::ContentIo)?;
+        // self.content.flush().await.map_err(Error::ContentIo)?;
         self.index.write_all(&index).await.map_err(Error::IndexIo)?;
-        self.index.flush().await.map_err(Error::IndexIo)?;
+        // self.index.flush().await.map_err(Error::IndexIo)?;
         Ok(())
     }
 }
