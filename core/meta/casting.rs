@@ -1,34 +1,10 @@
 use super::*;
-use foundations::{byterepr_struct_impl, now::*, sha3::*};
+use foundations::{byterepr_struct_impl, sha3::*};
 
 #[inline]
 pub const fn check_raw_stdptr(n: u16) -> bool {
     let h8 = n >> 8;
     h8 != 0xFF
-}
-
-impl Timestamp {
-    pub const EPOCH_AFTER_UNIX_EPOCH_SEC: i64 = 978307200;
-
-    pub fn now() -> Timestamp {
-        let (secs, nanos) = now_raw();
-        assert!(secs <= i64::MAX as _);
-        Timestamp {
-            secs: secs as i64 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
-            nanos,
-        }
-    }
-
-    pub const fn from_unix_ms(ts: i64) -> Timestamp {
-        Timestamp {
-            secs: ts / 1_000 - Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC,
-            nanos: ((ts % 1_000) as u32) * 1_000_000,
-        }
-    }
-
-    pub const fn to_unix_ms(&self) -> i64 {
-        (self.secs + Timestamp::EPOCH_AFTER_UNIX_EPOCH_SEC) * 1_000 + (self.nanos / 1_000_000) as i64
-    }
 }
 
 impl TypePtr {
